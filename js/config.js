@@ -11,9 +11,11 @@
 export const SUPABASE_URL = 'https://nzqoihpxacdxntixucfn.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56cW9paHB4YWNkeG50aXh1Y2ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI5NDcyNjksImV4cCI6MjEwODUyMzI2OX0.CiKfaiw99s_vfgPoTJYiFsu8kxIBKJef2bSvdXVC1V0';
 
-// Only addresses on this domain may create an account or sign in.
-// The same value is enforced in supabase/schema.sql by public.tbs_email_domain().
-export const ALLOWED_EMAIL_DOMAIN = '@tbs.u-tunis.tn';
+// Any valid email address may create an account (a normal Gmail account works).
+// Leave this empty to allow every provider. Set it to a domain such as
+// '@gmail.com' to restrict sign-ups, and add the matching database trigger
+// from supabase/README.md if you also want server-side enforcement.
+export const ALLOWED_EMAIL_DOMAIN = '';
 
 // ---------------------------------------------------------------------------
 // App rules

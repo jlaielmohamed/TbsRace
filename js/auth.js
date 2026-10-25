@@ -48,14 +48,16 @@ function clearMessageOnInput(form, messageElement) {
 function validateEmailField(input, errorElement) {
   const email = normalizeEmail(input.value);
   if (!email) {
-    setFieldError(input, errorElement, 'Enter your TBS email address.');
+    setFieldError(input, errorElement, 'Enter your email address.');
     return false;
   }
   if (!isAllowedEmail(email)) {
     setFieldError(
       input,
       errorElement,
-      `Use a TBS email address ending in ${ALLOWED_EMAIL_DOMAIN}.`
+      ALLOWED_EMAIL_DOMAIN
+        ? `Use an email address ending in ${ALLOWED_EMAIL_DOMAIN}.`
+        : 'Enter a valid email address, for example you@gmail.com.'
     );
     return false;
   }

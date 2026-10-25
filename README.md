@@ -13,7 +13,7 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Levels** 1-6 (Rookie to Legend) with capped bonus progress, streak and goal-day stats.
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
 - **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
-- **Auth** with TBS email/password sign-up (no email confirmation step), sign-in, password reset and persistent sessions.
+- **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), sign-in, password reset and persistent sessions.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
 
 ---
@@ -46,7 +46,7 @@ tbsrace/
 │       ├── stats.css
 │       └── leaderboard.css
 ├── js/
-│   ├── config.js               # Supabase keys, domain, timezone and product rules
+│   ├── config.js               # Supabase keys, timezone and product rules
 │   ├── supabaseClient.js       # pinned CDN client, one shared instance
 │   ├── utils.js                # dates, durations, escaping, colours
 │   ├── ui.js                   # friendly errors, toasts, empty/error/loading states
@@ -145,7 +145,7 @@ npx --yes http-server . -p 8080 -c-1
 
 **Do not double-click `index.html`.** The app is built from ES modules, and browsers block module scripts and Supabase requests on `file://` URLs, so a double-clicked page cannot start. It must be served over HTTP. If you do open it from disk, the page now explains this instead of sitting on the loading screen.
 
-Create two test accounts with `@tbs.u-tunis.tn` addresses (or the domain you configured) and save a session with each.
+Create two test accounts with any valid email addresses (a normal Gmail account works) and save a session with each.
 
 ---
 
@@ -157,7 +157,7 @@ All product rules live in `js/config.js` and are mirrored in `supabase/schema.sq
 | --- | --- | --- | --- |
 | Supabase URL | `SUPABASE_URL` | — | your project URL |
 | Supabase public key | `SUPABASE_ANON_KEY` | — | your anon/publishable key |
-| TBS email domain | `ALLOWED_EMAIL_DOMAIN` | `public.tbs_email_domain()` | `@tbs.u-tunis.tn` |
+| Email restriction | `ALLOWED_EMAIL_DOMAIN` | — | empty, so any valid email is accepted |
 | Study-day timezone | `TIMEZONE` | `public.app_timezone()` | `Europe/Paris` |
 | Default daily goal | `DAILY_GOAL_DEFAULT_MINUTES` | `public.daily_goal_default_minutes()` | `60` minutes |
 | Level thresholds | `LEVELS` | arrays in `calculate_study_progress()` | 0 / 10 / 30 / 75 / 150 / 300 h |
@@ -165,7 +165,7 @@ All product rules live in `js/config.js` and are mirrored in `supabase/schema.sq
 | Streak-day bonus | `STREAK_DAY_BONUS_HOURS` | `streak_day_bonus_hours()` | `0.05` h |
 | Bonus cap | `MAX_LEVEL_BONUS_HOURS` | `max_level_bonus_hours()` | `2` h |
 
-**Important:** the database is the source of truth for levels, bonus, streaks and rankings. If you change a threshold, the domain or the timezone, update both the JavaScript and the SQL, then rerun `supabase/schema.sql` (or just the changed functions). Do not change only one side.
+**Important:** the database is the source of truth for levels, bonus, streaks and rankings. If you change a threshold or the timezone, update both the JavaScript and the SQL, then rerun `supabase/schema.sql` (or just the changed functions). Do not change only one side.
 
 The daily goal default applies to **new** profiles. Existing rows keep whatever value they were created with, so after changing it run this once to bring everyone onto the new goal:
 
@@ -173,7 +173,7 @@ The daily goal default applies to **new** profiles. Existing rows keep whatever 
 update public.profiles set daily_goal_minutes = public.daily_goal_default_minutes();
 ```
 
-Changing the email domain affects accounts that already exist. Users registered on the old domain can no longer sign in or reset their password, because the client rejects the address before contacting Supabase. Either edit those users' addresses in **Authentication → Users** to the new domain, or delete the test accounts and recreate them.
+Sign-up accepts any valid email address, including a normal Gmail account. `ALLOWED_EMAIL_DOMAIN` is empty by default; setting it to a domain such as `@gmail.com` restricts the client-side check, but the database no longer enforces a domain, so treat that as a convenience rather than a security boundary.
 
 ### Timezone and day boundaries
 
@@ -228,7 +228,7 @@ No SPA rewrite is required. Every internal link includes `.html`, and Render ser
 
 - [ ] Set the production URL in Supabase Site URL and Redirect URLs.
 - [ ] Confirm the app loads without a setup notice.
-- [ ] Sign up with a real TBS address and land on the timer immediately.
+- [ ] Sign up with a real email address (Gmail works) and land on the timer immediately.
 - [ ] Sign in, save a session, reload the timer and verify it restores.
 - [ ] Sign out and confirm private pages redirect to sign in.
 - [ ] Run the two-account RLS test below.
@@ -240,7 +240,7 @@ No SPA rewrite is required. Every internal link includes `.html`, and Render ser
 
 RLS is the real security boundary. The UI guard only improves the experience.
 
-1. Create **Account A** and **Account B**, both with TBS emails.
+1. Create **Account A** and **Account B**, both with valid email addresses.
 2. Sign in as A and save a session. Sign in as B and save a different session.
 3. In the Supabase SQL Editor, find their ids:
    ```sql
@@ -346,7 +346,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 
 - [ ] `SUPABASE_URL` and `SUPABASE_ANON_KEY` in `js/config.js` are your real project values.
 - [ ] No `service_role` key or other secret exists anywhere in the repository.
-- [ ] `ALLOWED_EMAIL_DOMAIN` matches the school domain you intend to use.
+- [ ] `ALLOWED_EMAIL_DOMAIN` is empty unless you deliberately restricted sign-ups.
 - [ ] `TIMEZONE` matches `public.app_timezone()` in the database.
 - [ ] `LEVELS`, daily goal and bonus constants match their SQL counterparts.
 - [ ] The Supabase JS CDN version is still `2.49.8` (or deliberately upgraded and retested).
@@ -375,7 +375,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 
 ### Product checks
 
-- [ ] Sign-up rejects a non-TBS email in the UI and would also be rejected by the database trigger.
+- [ ] Sign-up rejects a malformed email address in the UI and accepts a normal Gmail address.
 - [ ] Signing up lands directly on the timer with no email confirmation step.
 - [ ] Sign-in, sign-out, forgot password and reset password all work.
 - [ ] A refresh during a running timer restores the session and keeps counting.
@@ -396,7 +396,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 `js/config.js` still has placeholders, or the URL/key is malformed. Replace both values and hard-refresh.
 
 **Sign-up returns “Database error saving new user”.**
-The schema or its triggers are missing, or the email domain trigger rejected the address. Run `supabase/schema.sql` again and check **Logs → Auth** / Postgres logs. TBS email enforcement is intentionally server-side, so an address that passes a stale frontend build will still be rejected.
+The schema or its trigger is missing, or an older database still runs the removed TBS-domain trigger. Run `supabase/schema.sql` again (it drops that trigger) and check **Logs → Auth** / Postgres logs.
 
 **Reset emails point to localhost.**
 Supabase uses the **Site URL** and **Redirect URLs** settings, not the frontend config. Set the production origin and add the deployed `reset-password.html` URL.
@@ -441,7 +441,7 @@ The database requires `duration_seconds` to fit inside `end_time - start_time` (
 ## Security notes and limitations
 
 - **RLS is enabled** on `profiles` and `study_sessions`. Students can read and write only their own rows. Column grants also prevent changing ids, timestamps or other students' data.
-- **Email domain enforcement is server-side** through a trigger on `auth.users`, in addition to the friendly frontend validation.
+- **Sign-up is open to any valid email address**, so there is no server-side domain check. RLS still keeps every student's data separate; use Supabase's Auth settings (rate limits, CAPTCHA) if you open the site to the public.
 - **Leaderboard data is minimized** and computed by a `security definer` RPC. The client never receives another student's id or email.
 - **Internal progress helper is not callable** by `anon` or `authenticated`.
 - **Sessions are immutable** from the client: no update or delete policy exists.

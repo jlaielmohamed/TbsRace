@@ -21,10 +21,9 @@ For the full application setup, deployment and manual checklist, start with the 
 
 | Trigger | Timing | Purpose |
 | --- | --- | --- |
-| `enforce_tbs_email_domain_on_auth_users` | `before insert or update of email` | Rejects any address that does not end exactly in `@tbs.u-tunis.tn` |
 | `on_auth_user_created` | `after insert` | Creates the matching `profiles` row from sign-up metadata |
 
-The domain check compares the **exact suffix**, so addresses such as `student@tbs.u-tunis.tn.example.com` are rejected. If you change the school domain, change `public.tbs_email_domain()` and `ALLOWED_EMAIL_DOMAIN` in `js/config.js` together.
+Any valid email address may register, including a normal Gmail account. There is no domain restriction and no email confirmation step, so `supabase/schema.sql` also drops the `enforce_tbs_email_domain_on_auth_users` trigger from older databases.
 
 The profile trigger falls back to the local part of the email if no `full_name` metadata is present, trims the name to 80 characters and validates the class year.
 
@@ -227,7 +226,7 @@ The database is the source of truth for progress, bonus and ranking. Change both
 
 | Change | Frontend | Database |
 | --- | --- | --- |
-| School email domain | `ALLOWED_EMAIL_DOMAIN` | `public.tbs_email_domain()` |
+| Email restriction | `ALLOWED_EMAIL_DOMAIN` (empty = any address) | none by default; see below |
 | Timezone | `TIMEZONE` | `public.app_timezone()` |
 | Daily goal default | `DAILY_GOAL_DEFAULT_MINUTES` | `public.daily_goal_default_minutes()` |
 | Level thresholds/names | `LEVELS` | arrays in `public.calculate_study_progress()` |
@@ -237,7 +236,7 @@ The database is the source of truth for progress, bonus and ranking. Change both
 
 After editing `schema.sql`, either rerun the whole file or run only the changed `create or replace function` statements. Rerunning the whole file is safe; it does not drop data.
 
-If you changed a domain, also test an invalid address. The trigger rejects it even if the frontend validation is bypassed.
+`ALLOWED_EMAIL_DOMAIN` is empty by default, so the client accepts any email address (Gmail included) and the database enforces no domain. If you ever want a domain restriction again, set the constant in `js/config.js` and add a `before insert or update of email` trigger on `auth.users` that rejects other domains; the frontend check alone is only a convenience.
 
 ---
 
@@ -282,7 +281,7 @@ Confirm the JSON has no ids or emails.
 Delete them in **Authentication → Users**. Cascading foreign keys remove profiles and sessions. Alternatively:
 
 ```sql
-delete from auth.users where email in ('test-a@tbs.u-tunis.tn', 'test-b@tbs.u-tunis.tn');
+delete from auth.users where email in ('test-a@gmail.com', 'test-b@gmail.com');
 ```
 
 Only do this for accounts you own.
@@ -293,7 +292,6 @@ This deletes all profiles and sessions. Use it only on a throwaway project.
 
 ```sql
 drop trigger if exists on_auth_user_created on auth.users;
-drop trigger if exists enforce_tbs_email_domain_on_auth_users on auth.users;
 
 drop function if exists public.get_my_best_rank_this_month();
 drop function if exists public.get_leaderboard(text);
@@ -301,7 +299,6 @@ drop function if exists public.get_my_progress();
 drop function if exists public.calculate_study_progress(uuid);
 drop function if exists public.set_updated_at();
 drop function if exists public.handle_new_user();
-drop function if exists public.enforce_tbs_email_domain();
 
 drop table if exists public.study_sessions;
 drop table if exists public.profiles;
@@ -310,8 +307,10 @@ drop function if exists public.max_level_bonus_hours();
 drop function if exists public.streak_day_bonus_hours();
 drop function if exists public.goal_day_bonus_hours();
 drop function if exists public.daily_goal_default_minutes();
-drop function if exists public.tbs_email_domain();
 drop function if exists public.app_timezone();
+-- Left over from older databases that enforced an email domain.
+drop function if exists public.enforce_tbs_email_domain();
+drop function if exists public.tbs_email_domain();
 ```
 
 Then run `schema.sql` again. Existing auth users will not automatically get profiles until you backfill them; the root README includes a backfill query.
@@ -322,8 +321,8 @@ Then run `schema.sql` again. Existing auth users will not automatically get prof
 
 | Message | Likely cause | Fix |
 | --- | --- | --- |
-| `Only @tbs.u-tunis.tn email addresses may create a TbsRace account.` | Domain trigger rejected the sign-up email | Use a TBS address or update both domain settings |
-| `Database error saving new user` | Auth insert failed inside a trigger | Check Postgres/Auth logs; rerun `schema.sql`; verify the profile and domain triggers exist |
+| `Only @tbs.u-tunis.tn email addresses may create a TbsRace account.` | An older database still runs the removed domain trigger | Rerun `supabase/schema.sql`; it drops the trigger |
+| `Database error saving new user` | Auth insert failed inside a trigger | Check Postgres/Auth logs; rerun `schema.sql`; verify the profile trigger exists |
 | `new row violates row-level security policy` | A client tried to write another user's data or update a session | Expected. Keep RLS on; do not add update/delete policies for sessions |
 | `permission denied for table study_sessions` | Anonymous role or missing grant | Expected for `anon`; make sure the request is authenticated |
 | `function public.get_leaderboard(text) does not exist` | Schema not applied or stale PostgREST cache | Run `schema.sql`; `notify pgrst, 'reload schema';` |

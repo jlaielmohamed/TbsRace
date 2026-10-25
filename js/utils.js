@@ -353,15 +353,27 @@ export function normalizeEmail(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+/**
+ * Accept any well-formed address (Gmail, Outlook, school, ...). When
+ * ALLOWED_EMAIL_DOMAIN is set, the domain suffix must match as well.
+ */
 export function isAllowedEmail(value) {
   const email = normalizeEmail(value);
-  const domain = ALLOWED_EMAIL_DOMAIN.toLowerCase();
-  if (!domain.startsWith('@') || email.length > 254) return false;
+  if (!email || email.length > 254 || email.includes(' ')) return false;
+
   const atIndex = email.lastIndexOf('@');
   if (atIndex <= 0 || atIndex !== email.indexOf('@')) return false;
-  if (!email.endsWith(domain)) return false;
+
   const local = email.slice(0, atIndex);
-  return local.length <= 64 && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..');
+  const domain = email.slice(atIndex + 1);
+  if (local.length > 64 || local.startsWith('.') || local.endsWith('.') || local.includes('..')) return false;
+  if (domain.length > 253) return false;
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(domain)) return false;
+
+  const restricted = ALLOWED_EMAIL_DOMAIN.trim().toLowerCase();
+  if (!restricted) return true;
+  if (!restricted.startsWith('@')) return false;
+  return email.endsWith(restricted);
 }
 
 export function formatCount(value) {

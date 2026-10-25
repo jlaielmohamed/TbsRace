@@ -8,14 +8,15 @@
 --    * public.profiles and public.study_sessions
 --    * Row Level Security policies (students can only read/write their own data)
 --    * a trigger that creates a profile for every new auth user
---    * a trigger that rejects non-TBS email addresses at the database level
 --    * public.get_my_progress()      -> level, streak, bonus and total time
 --    * public.get_leaderboard(text)  -> safe top 10 + the caller's own row
 --    * public.get_my_best_rank_this_month()
 --
+--  Any valid email address may sign up (a normal Gmail account is fine); there
+--  is no email-domain restriction and no confirmation step.
+--
 --  Values that must stay in sync with js/config.js:
 --    timezone                 Europe/Paris
---    TBS email domain         @tbs.u-tunis.tn
 --    daily goal               60 minutes
 --    levels                   0 / 10 / 30 / 75 / 150 / 300 hours
 --    bonus                    0.25h per goal day, 0.05h per streak day, 2h cap
@@ -36,18 +37,6 @@ $$;
 
 comment on function public.app_timezone() is
   'Single source of truth for the study-day timezone. Must match TIMEZONE in js/config.js.';
-
-create or replace function public.tbs_email_domain()
-returns text
-language sql
-immutable
-set search_path = public, pg_temp
-as $$
-  select '@tbs.u-tunis.tn'::text;
-$$;
-
-comment on function public.tbs_email_domain() is
-  'Only email addresses on this domain may create an account. Must match ALLOWED_EMAIL_DOMAIN in js/config.js.';
 
 create or replace function public.daily_goal_default_minutes()
 returns integer
@@ -147,7 +136,7 @@ create index if not exists study_sessions_start_idx
   on public.study_sessions (start_time desc);
 
 -- ----------------------------------------------------------------------------
--- 3. Triggers: profile creation, updated_at, email domain enforcement
+-- 3. Triggers: profile creation and updated_at
 -- ----------------------------------------------------------------------------
 
 create or replace function public.handle_new_user()
@@ -189,35 +178,13 @@ create trigger on_auth_user_created
   for each row
   execute function public.handle_new_user();
 
-create or replace function public.enforce_tbs_email_domain()
-returns trigger
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  v_domain text := lower(public.tbs_email_domain());
-begin
-  -- Check the exact suffix, not a loose LIKE, so "student@tbs.u-tunis.tn.evil.test"
-  -- can never be accepted.
-  if new.email is null
-     or char_length(lower(new.email)) <= char_length(v_domain)
-     or right(lower(new.email), char_length(v_domain)) <> v_domain then
-    raise exception 'Only % email addresses may create a TbsRace account.', public.tbs_email_domain()
-      using errcode = '23514',
-            hint = 'Sign up with your TBS student email address.';
-  end if;
-
-  return new;
-end;
-$$;
-
+-- The old TBS-domain trigger is gone: any valid email address can register,
+-- including a normal Gmail account. These statements remove it from databases
+-- that were created by an earlier version of this file.
 drop trigger if exists enforce_tbs_email_domain_on_auth_users on auth.users;
-
-create trigger enforce_tbs_email_domain_on_auth_users
-  before insert or update of email on auth.users
-  for each row
-  execute function public.enforce_tbs_email_domain();
+drop function if exists public.enforce_tbs_email_domain();
+-- cascade only covers leftovers from very old versions of this file.
+drop function if exists public.tbs_email_domain() cascade;
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -703,14 +670,13 @@ grant execute on function public.get_my_best_rank_this_month() to authenticated;
 
 -- Trigger functions and internal helpers are not callable from the API.
 revoke all on function public.handle_new_user() from public, anon, authenticated;
-revoke all on function public.enforce_tbs_email_domain() from public, anon, authenticated;
 revoke all on function public.set_updated_at() from public, anon, authenticated;
 
 -- ============================================================================
 --  Done.
 --
 --  Next steps:
---    1. Authentication -> Providers -> Email: enable email confirmation.
+--    1. Authentication -> Providers -> Email: keep "Confirm email" OFF.
 --    2. Authentication -> URL Configuration: set Site URL and redirect URLs
 --       for your deployed domain (see README.md).
 --    3. Test RLS with two real accounts (see README.md).

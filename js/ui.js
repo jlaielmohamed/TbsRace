@@ -65,8 +65,8 @@ export function friendlyError(error, fallback = 'Something went wrong. Please tr
   if (code === 'profile_missing' || code === 'p0002') {
     return 'Your student profile is missing. Run the database setup in README.md, then sign in again.';
   }
-  if (message.includes('tbs_email_domain') || message.includes('tbs email') || message.includes('email domain')) {
-    return 'Use a TBS email address to join TbsRace.';
+  if (message.includes('email domain') || message.includes('email addresses may create')) {
+    return 'That email address is not allowed here. Try signing up with another address.';
   }
   if (message.includes('email not confirmed') || message.includes('not confirmed')) {
     return 'Please confirm your email first. Check your inbox for the confirmation link.';
