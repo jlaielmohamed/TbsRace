@@ -105,8 +105,6 @@ async function initSignIn() {
 
   if (params.get('reset') === '1') {
     setFormMessage(message, 'Password updated. Sign in with your new password.', 'success');
-  } else if (params.get('confirmed') === '1') {
-    setFormMessage(message, 'Email confirmed. You can sign in now.', 'success');
   } else {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     const linkError = params.get('error_description') || hashParams.get('error_description');
@@ -171,8 +169,6 @@ async function initSignUp() {
   const classError = document.getElementById('class-error');
   const message = document.getElementById('form-message');
   const submit = form.querySelector('[type="submit"]');
-  const successPanel = document.getElementById('sign-up-success');
-  const successEmail = document.getElementById('sign-up-success-email');
   let submitting = false;
 
   clearMessageOnInput(form, message);
@@ -237,20 +233,27 @@ async function initSignUp() {
           data: {
             full_name: name.value.trim(),
             class_year: classYear
-          },
-          emailRedirectTo: absolutePage('sign-in.html?confirmed=1')
+          }
         }
       });
       if (error) throw error;
 
-      // If confirmations are disabled in Supabase, close the unexpected
-      // session and make the requirement explicit at the UI level too.
+      // Email confirmation is disabled, so a successful sign-up returns a
+      // session and the student can start immediately.
       if (data.session) {
-        await supabase.auth.signOut({ scope: 'local' });
+        window.location.replace(absolutePage('timer.html'));
+        return;
       }
 
-      if (successEmail) successEmail.textContent = normalizeEmail(email.value);
-      showSuccessPanel(successPanel, form, successPanel?.querySelector('h2'));
+      // The address already belongs to an account (Supabase does not reveal
+      // this directly), or confirmation is still enabled in the dashboard.
+      setFormMessage(
+        message,
+        'We could not sign you in automatically. Try signing in below, or ask your administrator to disable email confirmation in Supabase.',
+        'error'
+      );
+      submitting = false;
+      setButtonBusy(submit, false);
     } catch (error) {
       setFormMessage(message, friendlyError(error, 'We could not create your account. Please try again.'));
       submitting = false;

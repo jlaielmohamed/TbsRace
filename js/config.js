@@ -13,7 +13,7 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // Only addresses on this domain may create an account or sign in.
 // The same value is enforced in supabase/schema.sql by public.tbs_email_domain().
-export const ALLOWED_EMAIL_DOMAIN = '@tbs.edu';
+export const ALLOWED_EMAIL_DOMAIN = '@tbs.u-tunis.tn';
 
 // ---------------------------------------------------------------------------
 // App rules
@@ -22,7 +22,7 @@ export const ALLOWED_EMAIL_DOMAIN = '@tbs.edu';
 // public.app_timezone() in supabase/schema.sql.
 export const TIMEZONE = 'Europe/Paris';
 
-export const DAILY_GOAL_DEFAULT_MINUTES = 240;
+export const DAILY_GOAL_DEFAULT_MINUTES = 60;
 export const MIN_SESSION_SECONDS = 60;
 export const MAX_SESSION_SECONDS = 12 * 60 * 60;
 export const LEADERBOARD_REFRESH_MS = 60_000;

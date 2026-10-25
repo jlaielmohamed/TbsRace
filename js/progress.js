@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { toNumber } from './utils.js';
+import { DAILY_GOAL_DEFAULT_MINUTES } from './config.js';
 
 /**
  * Server-computed level, streak and bonus progress. The database is the single
@@ -26,6 +27,6 @@ export async function getMyProgress() {
     progress_percent: toNumber(data.progress_percent),
     streak: toNumber(data.streak),
     goal_days: toNumber(data.goal_days),
-    daily_goal_minutes: toNumber(data.daily_goal_minutes, 240)
+    daily_goal_minutes: toNumber(data.daily_goal_minutes, DAILY_GOAL_DEFAULT_MINUTES)
   };
 }

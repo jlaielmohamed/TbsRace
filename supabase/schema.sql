@@ -15,8 +15,8 @@
 --
 --  Values that must stay in sync with js/config.js:
 --    timezone                 Europe/Paris
---    TBS email domain         @tbs.edu
---    daily goal               240 minutes
+--    TBS email domain         @tbs.u-tunis.tn
+--    daily goal               60 minutes
 --    levels                   0 / 10 / 30 / 75 / 150 / 300 hours
 --    bonus                    0.25h per goal day, 0.05h per streak day, 2h cap
 -- ============================================================================
@@ -43,7 +43,7 @@ language sql
 immutable
 set search_path = public, pg_temp
 as $$
-  select '@tbs.edu'::text;
+  select '@tbs.u-tunis.tn'::text;
 $$;
 
 comment on function public.tbs_email_domain() is
@@ -55,7 +55,7 @@ language sql
 immutable
 set search_path = public, pg_temp
 as $$
-  select 240;
+  select 60;
 $$;
 
 create or replace function public.goal_day_bonus_hours()
@@ -95,11 +95,16 @@ create table if not exists public.profiles (
     constraint profiles_full_name_length check (char_length(btrim(full_name)) between 1 and 80),
   class_year text not null default 'Freshman'
     constraint profiles_class_year_valid check (class_year in ('Freshman', 'Sophomore', 'Junior', 'Senior')),
-  daily_goal_minutes integer not null default 240
+  daily_goal_minutes integer not null default public.daily_goal_default_minutes()
     constraint profiles_daily_goal_range check (daily_goal_minutes between 30 and 720),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Applies the configured default to databases created before it was a
+-- function call, so re-running this file updates new profiles too.
+alter table public.profiles
+  alter column daily_goal_minutes set default public.daily_goal_default_minutes();
 
 comment on table public.profiles is
   'Public identity used by the leaderboard. One row per auth user, created by trigger.';
@@ -193,7 +198,7 @@ as $$
 declare
   v_domain text := lower(public.tbs_email_domain());
 begin
-  -- Check the exact suffix, not a loose LIKE, so "student@tbs.edu.evil.test"
+  -- Check the exact suffix, not a loose LIKE, so "student@tbs.u-tunis.tn.evil.test"
   -- can never be accepted.
   if new.email is null
      or char_length(lower(new.email)) <= char_length(v_domain)

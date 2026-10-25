@@ -21,10 +21,10 @@ For the full application setup, deployment and manual checklist, start with the 
 
 | Trigger | Timing | Purpose |
 | --- | --- | --- |
-| `enforce_tbs_email_domain_on_auth_users` | `before insert or update of email` | Rejects any address that does not end exactly in `@tbs.edu` |
+| `enforce_tbs_email_domain_on_auth_users` | `before insert or update of email` | Rejects any address that does not end exactly in `@tbs.u-tunis.tn` |
 | `on_auth_user_created` | `after insert` | Creates the matching `profiles` row from sign-up metadata |
 
-The domain check compares the **exact suffix**, so addresses such as `student@tbs.edu.example.com` are rejected. If you change the school domain, change `public.tbs_email_domain()` and `ALLOWED_EMAIL_DOMAIN` in `js/config.js` together.
+The domain check compares the **exact suffix**, so addresses such as `student@tbs.u-tunis.tn.example.com` are rejected. If you change the school domain, change `public.tbs_email_domain()` and `ALLOWED_EMAIL_DOMAIN` in `js/config.js` together.
 
 The profile trigger falls back to the local part of the email if no `full_name` metadata is present, trims the name to 80 characters and validates the class year.
 
@@ -62,7 +62,7 @@ The profile trigger falls back to the local part of the email if no `full_name` 
   "progress_percent": 37.3,
   "streak": 1,
   "goal_days": 1,
-  "daily_goal_minutes": 240
+  "daily_goal_minutes": 60
 }
 ```
 
@@ -105,7 +105,7 @@ RLS is the security boundary. The frontend guard only decides where to send a si
 In the Supabase dashboard:
 
 1. **Authentication → Providers → Email**: enabled.
-2. **Authentication → Settings → Confirm email**: enabled. The app deliberately signs out an unexpected session if confirmations are disabled.
+2. **Authentication → Settings → Confirm email**: **disabled**. Sign-up must return a session immediately; the app redirects straight to the timer and no longer waits for a confirmation link.
 3. **Minimum password length**: 8.
 4. **Authentication → URL Configuration → Site URL**: your deployed origin.
 5. **Redirect URLs**: every origin/path that can receive an email link, including:
@@ -113,14 +113,13 @@ In the Supabase dashboard:
    http://localhost:8080/**
    https://YOUR-APP.onrender.com/**
    ```
-6. **SMTP**: configure a real provider before inviting students. The built-in sender is rate-limited.
+6. **SMTP**: configure a real provider before inviting students. The built-in sender is rate-limited. It is still needed for password reset emails.
 
-The frontend requests these return paths:
+The frontend requests this return path:
 
-- Sign-up confirmation → `pages/sign-in.html?confirmed=1`
 - Password reset → `pages/reset-password.html`
 
-Make sure both are covered by the redirect allow list for every origin you use.
+Make sure it is covered by the redirect allow list for every origin you use.
 
 ---
 
@@ -151,7 +150,7 @@ rollback;
 Find account ids with:
 
 ```sql
-select id, email, email_confirmed_at
+select id, email
 from auth.users
 order by created_at;
 ```
@@ -283,7 +282,7 @@ Confirm the JSON has no ids or emails.
 Delete them in **Authentication → Users**. Cascading foreign keys remove profiles and sessions. Alternatively:
 
 ```sql
-delete from auth.users where email in ('test-a@tbs.edu', 'test-b@tbs.edu');
+delete from auth.users where email in ('test-a@tbs.u-tunis.tn', 'test-b@tbs.u-tunis.tn');
 ```
 
 Only do this for accounts you own.
@@ -323,7 +322,7 @@ Then run `schema.sql` again. Existing auth users will not automatically get prof
 
 | Message | Likely cause | Fix |
 | --- | --- | --- |
-| `Only @tbs.edu email addresses may create a TbsRace account.` | Domain trigger rejected the sign-up email | Use a TBS address or update both domain settings |
+| `Only @tbs.u-tunis.tn email addresses may create a TbsRace account.` | Domain trigger rejected the sign-up email | Use a TBS address or update both domain settings |
 | `Database error saving new user` | Auth insert failed inside a trigger | Check Postgres/Auth logs; rerun `schema.sql`; verify the profile and domain triggers exist |
 | `new row violates row-level security policy` | A client tried to write another user's data or update a session | Expected. Keep RLS on; do not add update/delete policies for sessions |
 | `permission denied for table study_sessions` | Anonymous role or missing grant | Expected for `anon`; make sure the request is authenticated |

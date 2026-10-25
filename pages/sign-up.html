@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/pages/auth.css">
+  <script src="../js/env-check.js" defer></script>
   <script type="module" src="../js/auth.js"></script>
 </head>
 <body data-page="sign-up" data-auth-page="signup">
@@ -42,7 +43,7 @@
         <div class="field">
           <label class="field-label" for="sign-up-email">TBS email</label>
           <input id="sign-up-email" name="email" type="email" inputmode="email" autocomplete="email"
-            placeholder="you@tbs.edu" required aria-describedby="sign-up-email-hint sign-up-email-error">
+            placeholder="you@tbs.u-tunis.tn" required aria-describedby="sign-up-email-hint sign-up-email-error">
           <p id="sign-up-email-hint" class="field-hint">Only TBS email addresses can create an account.</p>
           <p id="sign-up-email-error" class="field-error" hidden></p>
         </div>
@@ -101,14 +102,6 @@
 
         <button class="btn btn-gold btn-block" type="submit">Create account</button>
       </form>
-
-      <section id="sign-up-success" class="auth-success" aria-labelledby="sign-up-success-title" hidden>
-        <span class="auth-success-icon" aria-hidden="true">✓</span>
-        <h2 id="sign-up-success-title" tabindex="-1">Check your inbox</h2>
-        <p>We sent a confirmation link to <strong id="sign-up-success-email">your TBS email</strong>.</p>
-        <p class="muted">Open the link to confirm your address, then sign in. Check your spam folder if it does not arrive in a minute.</p>
-        <a class="btn btn-gold btn-block" href="./sign-in.html">Go to sign in</a>
-      </section>
 
       <p class="auth-switch">Already racing? <a href="./sign-in.html">Sign in</a></p>
     </section>

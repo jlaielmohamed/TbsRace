@@ -13,7 +13,7 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Levels** 1-6 (Rookie to Legend) with capped bonus progress, streak and goal-day stats.
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
 - **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
-- **Auth** with TBS email/password sign-up, email confirmation, sign-in, password reset and persistent sessions.
+- **Auth** with TBS email/password sign-up (no email confirmation step), sign-in, password reset and persistent sessions.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
 
 ---
@@ -57,6 +57,7 @@ tbsrace/
 │   ├── sessions.js
 │   ├── leaderboardData.js
 │   ├── levelView.js
+│   ├── env-check.js            # explains that file:// cannot run the app
 │   ├── index.js
 │   ├── auth.js
 │   ├── timer.js
@@ -71,6 +72,7 @@ tbsrace/
 │   ├── schema.sql              # tables, triggers, RLS, indexes and RPCs
 │   └── README.md               # database-specific setup and test notes
 ├── render.yaml                 # optional Render Blueprint with security headers
+├── serve.mjs                   # zero-dependency local web server
 └── README.md
 ```
 
@@ -94,7 +96,7 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
 2. Open **SQL Editor**, paste all of `supabase/schema.sql`, and run it. It is safe to run again.
 3. Go to **Authentication → Providers → Email** and make sure Email is enabled.
 4. Go to **Authentication → Settings** and:
-   - enable **Confirm email** (required by this app),
+   - turn **Confirm email** **off** (this app signs students in immediately after sign-up),
    - set **Minimum password length** to `8`,
    - set **Site URL** to your production origin (for example `https://YOUR-APP.onrender.com`).
 5. Under **Authentication → URL Configuration → Redirect URLs**, add every URL the app can return to:
@@ -102,8 +104,8 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
    http://localhost:8080/**
    https://YOUR-APP.onrender.com/**
    ```
-   Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too.
-6. For a production launch, configure **custom SMTP** under **Authentication → SMTP Settings**. Supabase's built-in email sender is rate-limited and not intended for a whole school.
+   Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too. These URLs are used by password reset links.
+6. Password reset emails still need a working sender. Configure **custom SMTP** under **Authentication → SMTP Settings** for production; Supabase's built-in sender is rate-limited and not intended for a whole school.
 
 Detailed database notes and an RLS test script are in [`supabase/README.md`](supabase/README.md).
 
@@ -130,12 +132,20 @@ While the placeholders are present, every page shows a setup notice instead of f
 From the project root:
 
 ```bash
+node serve.mjs
+```
+
+Then open <http://localhost:8080/>. To use another port: `node serve.mjs 3000`.
+
+Any equivalent static server works too, for example:
+
+```bash
 npx --yes http-server . -p 8080 -c-1
 ```
 
-Then open <http://localhost:8080/>. Any equivalent static server works; the important part is that the site is served over HTTP, not opened from disk.
+**Do not double-click `index.html`.** The app is built from ES modules, and browsers block module scripts and Supabase requests on `file://` URLs, so a double-clicked page cannot start. It must be served over HTTP. If you do open it from disk, the page now explains this instead of sitting on the loading screen.
 
-Create two test accounts with `@tbs.edu` addresses (or the domain you configured), confirm both, and save a session with each.
+Create two test accounts with `@tbs.u-tunis.tn` addresses (or the domain you configured) and save a session with each.
 
 ---
 
@@ -147,15 +157,23 @@ All product rules live in `js/config.js` and are mirrored in `supabase/schema.sq
 | --- | --- | --- | --- |
 | Supabase URL | `SUPABASE_URL` | — | your project URL |
 | Supabase public key | `SUPABASE_ANON_KEY` | — | your anon/publishable key |
-| TBS email domain | `ALLOWED_EMAIL_DOMAIN` | `public.tbs_email_domain()` | `@tbs.edu` |
+| TBS email domain | `ALLOWED_EMAIL_DOMAIN` | `public.tbs_email_domain()` | `@tbs.u-tunis.tn` |
 | Study-day timezone | `TIMEZONE` | `public.app_timezone()` | `Europe/Paris` |
-| Default daily goal | `DAILY_GOAL_DEFAULT_MINUTES` | `public.daily_goal_default_minutes()` | `240` minutes |
+| Default daily goal | `DAILY_GOAL_DEFAULT_MINUTES` | `public.daily_goal_default_minutes()` | `60` minutes |
 | Level thresholds | `LEVELS` | arrays in `calculate_study_progress()` | 0 / 10 / 30 / 75 / 150 / 300 h |
 | Goal-day bonus | `GOAL_DAY_BONUS_HOURS` | `goal_day_bonus_hours()` | `0.25` h |
 | Streak-day bonus | `STREAK_DAY_BONUS_HOURS` | `streak_day_bonus_hours()` | `0.05` h |
 | Bonus cap | `MAX_LEVEL_BONUS_HOURS` | `max_level_bonus_hours()` | `2` h |
 
 **Important:** the database is the source of truth for levels, bonus, streaks and rankings. If you change a threshold, the domain or the timezone, update both the JavaScript and the SQL, then rerun `supabase/schema.sql` (or just the changed functions). Do not change only one side.
+
+The daily goal default applies to **new** profiles. Existing rows keep whatever value they were created with, so after changing it run this once to bring everyone onto the new goal:
+
+```sql
+update public.profiles set daily_goal_minutes = public.daily_goal_default_minutes();
+```
+
+Changing the email domain affects accounts that already exist. Users registered on the old domain can no longer sign in or reset their password, because the client rejects the address before contacting Supabase. Either edit those users' addresses in **Authentication → Users** to the new domain, or delete the test accounts and recreate them.
 
 ### Timezone and day boundaries
 
@@ -181,6 +199,8 @@ Every “day”, “week” and “month” boundary is calculated in `Europe/Pa
 ---
 
 ## Deploy to Render
+
+> **Important:** create a **Static Site** (or use the Blueprint), never a **Web Service**. TbsRace is plain HTML, CSS and JavaScript, so it has no server to start. A Web Service form asks for a Start Command and refuses to deploy without one; that requirement does not apply here.
 
 ### Option A — Blueprint (recommended)
 
@@ -208,7 +228,7 @@ No SPA rewrite is required. Every internal link includes `.html`, and Render ser
 
 - [ ] Set the production URL in Supabase Site URL and Redirect URLs.
 - [ ] Confirm the app loads without a setup notice.
-- [ ] Sign up with a real TBS address and receive the confirmation email.
+- [ ] Sign up with a real TBS address and land on the timer immediately.
 - [ ] Sign in, save a session, reload the timer and verify it restores.
 - [ ] Sign out and confirm private pages redirect to sign in.
 - [ ] Run the two-account RLS test below.
@@ -220,11 +240,11 @@ No SPA rewrite is required. Every internal link includes `.html`, and Render ser
 
 RLS is the real security boundary. The UI guard only improves the experience.
 
-1. Create **Account A** and **Account B**, both with confirmed TBS emails.
+1. Create **Account A** and **Account B**, both with TBS emails.
 2. Sign in as A and save a session. Sign in as B and save a different session.
 3. In the Supabase SQL Editor, find their ids:
    ```sql
-   select id, email, email_confirmed_at
+   select id, email
    from auth.users
    order by created_at;
    ```
@@ -290,7 +310,7 @@ One row per auth user, created automatically by an `after insert` trigger on `au
 | `id` | `uuid`, primary key, references `auth.users(id)` on delete cascade |
 | `full_name` | 1-80 characters after trimming |
 | `class_year` | `Freshman`, `Sophomore`, `Junior` or `Senior` |
-| `daily_goal_minutes` | 30-720, default 240 |
+| `daily_goal_minutes` | 30-720, default 60 |
 | `created_at`, `updated_at` | timestamps; `updated_at` is maintained by trigger |
 
 ### `public.study_sessions`
@@ -334,7 +354,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 ### Supabase
 
 - [ ] `supabase/schema.sql` ran without errors.
-- [ ] Email provider is enabled and **Confirm email** is on.
+- [ ] Email provider is enabled and **Confirm email** is **off**.
 - [ ] Minimum password length is 8.
 - [ ] Site URL is the production origin.
 - [ ] All local and production redirect URLs are allow-listed.
@@ -351,12 +371,13 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] The CSP allows your Supabase project, jsDelivr and Google Fonts.
 - [ ] HTTPS works and the custom domain (if any) is verified.
 - [ ] Supabase URLs were updated after the final domain was known.
-- [ ] A confirmation email and a reset email both return to the deployed site.
+- [ ] A password reset email returns to the deployed site.
 
 ### Product checks
 
 - [ ] Sign-up rejects a non-TBS email in the UI and would also be rejected by the database trigger.
-- [ ] Confirmation, sign-in, sign-out, forgot password and reset password all work.
+- [ ] Signing up lands directly on the timer with no email confirmation step.
+- [ ] Sign-in, sign-out, forgot password and reset password all work.
 - [ ] A refresh during a running timer restores the session and keeps counting.
 - [ ] Finishing under one minute discards the session; finishing at or above one minute saves it.
 - [ ] The plan-end alert is visible and audible (after the first user interaction unlocks audio).
@@ -377,8 +398,11 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 **Sign-up returns “Database error saving new user”.**
 The schema or its triggers are missing, or the email domain trigger rejected the address. Run `supabase/schema.sql` again and check **Logs → Auth** / Postgres logs. TBS email enforcement is intentionally server-side, so an address that passes a stale frontend build will still be rejected.
 
-**Confirmation or reset emails point to localhost.**
-Supabase uses the **Site URL** and **Redirect URLs** settings, not the frontend config. Set the production origin and add the deployed `sign-in.html` / `reset-password.html` URLs.
+**Reset emails point to localhost.**
+Supabase uses the **Site URL** and **Redirect URLs** settings, not the frontend config. Set the production origin and add the deployed `reset-password.html` URL.
+
+**Sign-up succeeds but the student is not signed in.**
+Supabase still has **Confirm email** enabled. Turn it off in **Authentication → Settings**; the app creates the account and expects an immediate session.
 
 **“Your profile could not be found.”**
 The `on_auth_user_created` trigger was added after the user was created. Backfill missing profiles:
@@ -423,7 +447,7 @@ The database requires `duration_seconds` to fit inside `end_time - start_time` (
 - **Sessions are immutable** from the client: no update or delete policy exists.
 - **Time is client-reported.** A determined student could insert a fabricated but internally consistent session for their own account. The schema validates shape and limits but cannot prove real-world focus. If cheating becomes a concern, add server-side session start/stop tokens or a moderation workflow.
 - **No realtime subscription** for the leaderboard; it refreshes every 60 seconds and when the tab becomes visible.
-- **Daily goal editing** is supported by the schema but there is no settings screen in this version; all profiles start at 240 minutes.
+- **Daily goal editing** is supported by the schema but there is no settings screen in this version; all profiles start at 60 minutes.
 - **Static hosting** means there is no server-side rendering and no secrets in the frontend. That is intentional.
 
 ---

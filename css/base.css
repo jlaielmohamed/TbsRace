@@ -251,6 +251,70 @@ legend {
   font-size: 0.9rem;
 }
 
+/* --------------------------------------------------------------------------
+   File-protocol notice, rendered by js/env-check.js
+   -------------------------------------------------------------------------- */
+
+.file-mode {
+  background:
+    radial-gradient(700px 500px at 50% 25%, rgba(216, 180, 74, 0.1), transparent 65%),
+    var(--bg);
+}
+
+.file-mode-main {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 32px 20px calc(32px + env(safe-area-inset-bottom));
+}
+
+.file-mode-card {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(22px, 5vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.file-mode-card .brand {
+  margin-bottom: 6px;
+}
+
+.file-mode-card h1 {
+  font-size: clamp(1.45rem, 3.4vw, 1.9rem);
+  line-height: 1.15;
+}
+
+.file-mode-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.file-mode-card .file-mode-note {
+  margin-top: 4px;
+  color: var(--muted-2);
+  font-size: 0.82rem;
+}
+
+.file-mode-card pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--bg-soft);
+  color: var(--gold-bright);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
