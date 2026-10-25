@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="See every study session you finish, day by day, in your TbsRace calendar.">
+  <title>Calendar · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/calendar.css">
+  <script type="module" src="../js/calendar.js"></script>
+</head>
+<body data-page="calendar">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-calendar">
+    <div class="container">
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow">Calendar</p>
+          <h1>Your study calendar</h1>
+          <p id="calendar-subtitle" class="page-lede">Every session you finish is saved here with the time you studied at.</p>
+        </div>
+        <div class="view-switch" role="tablist" aria-label="Calendar view">
+          <button class="view-tab is-selected" type="button" role="tab" id="tab-month"
+            data-calendar-view="month" aria-selected="true" aria-controls="month-view" tabindex="0">Month</button>
+          <button class="view-tab" type="button" role="tab" id="tab-day"
+            data-calendar-view="day" aria-selected="false" aria-controls="day-view" tabindex="-1">Day</button>
+        </div>
+      </header>
+
+      <div id="calendar-meta-alert" class="inline-alert" role="status" hidden>
+        <span data-meta-error>Some profile details could not load. Your calendar still works.</span>
+        <button id="calendar-meta-retry" class="btn btn-outline btn-small" type="button">Retry</button>
+      </div>
+
+      <div id="calendar-error" class="card" hidden></div>
+
+      <div id="calendar-content" class="calendar-layout">
+        <section class="card calendar-main" aria-labelledby="calendar-title">
+          <div class="calendar-toolbar">
+            <div>
+              <p class="eyebrow">Viewing</p>
+              <h2 id="calendar-title">October 2026</h2>
+            </div>
+            <div class="calendar-nav" role="group" aria-label="Change calendar period">
+              <button id="calendar-prev" class="icon-button" type="button" aria-label="Previous month">‹</button>
+              <button id="calendar-next" class="icon-button" type="button" aria-label="Next month">›</button>
+            </div>
+          </div>
+
+          <div id="month-view" role="tabpanel" aria-labelledby="tab-month">
+            <div class="weekday-row" aria-hidden="true">
+              <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid" role="group" aria-labelledby="calendar-title"></div>
+            <div class="calendar-legend" aria-hidden="true">
+              <span>Less</span>
+              <span class="legend-swatch is-none"></span>
+              <span class="legend-swatch is-low"></span>
+              <span class="legend-swatch is-medium"></span>
+              <span class="legend-swatch is-high"></span>
+              <span>More</span>
+            </div>
+          </div>
+
+          <div id="day-view" class="day-view" role="tabpanel" aria-labelledby="tab-day" hidden>
+            <div id="timeline-scroll" class="timeline-scroll" role="group" aria-label="Timeline of sessions for the selected day">
+              <div id="timeline" class="timeline"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="calendar-side">
+          <section id="calendar-detail" class="card calendar-detail" aria-live="polite">
+            <div class="skeleton-stack" aria-hidden="true">
+              <span class="skeleton-line skeleton-line-wide"></span>
+              <span class="skeleton-line"></span>
+              <span class="skeleton-line skeleton-line-wide"></span>
+            </div>
+          </section>
+          <section id="month-mini" class="card month-mini" aria-label="Month summary">
+            <div class="skeleton-stack" aria-hidden="true">
+              <span class="skeleton-line"></span>
+              <span class="skeleton-line skeleton-line-wide"></span>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to load your calendar. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

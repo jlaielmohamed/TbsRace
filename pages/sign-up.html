@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Create your TbsRace account and start climbing the TBS study leaderboard.">
+  <title>Join the race · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/auth.css">
+  <script type="module" src="../js/auth.js"></script>
+</head>
+<body data-page="sign-up" data-auth-page="signup">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="auth"></div>
+
+  <main id="main" class="auth-main">
+    <section class="auth-shell" aria-labelledby="sign-up-title">
+      <header class="auth-heading">
+        <p class="eyebrow">Join the race</p>
+        <h1 id="sign-up-title">Join the race</h1>
+        <p class="auth-lede">Create your account and start climbing the TBS leaderboard.</p>
+      </header>
+
+      <form id="sign-up-form" class="auth-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="sign-up-name">Full name</label>
+          <input id="sign-up-name" name="full_name" type="text" autocomplete="name" maxlength="80"
+            placeholder="Your full name" required aria-describedby="sign-up-name-hint sign-up-name-error">
+          <p id="sign-up-name-hint" class="field-hint">This is the name other students see on the leaderboard.</p>
+          <p id="sign-up-name-error" class="field-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="sign-up-email">TBS email</label>
+          <input id="sign-up-email" name="email" type="email" inputmode="email" autocomplete="email"
+            placeholder="you@tbs.edu" required aria-describedby="sign-up-email-hint sign-up-email-error">
+          <p id="sign-up-email-hint" class="field-hint">Only TBS email addresses can create an account.</p>
+          <p id="sign-up-email-error" class="field-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="sign-up-password">Password</label>
+          <div class="input-with-action">
+            <input id="sign-up-password" name="password" type="password" autocomplete="new-password"
+              placeholder="At least 8 characters" required minlength="8"
+              aria-describedby="sign-up-password-hint sign-up-password-error">
+            <button class="password-toggle" type="button" data-target="sign-up-password"
+              aria-label="Show password" aria-pressed="false">
+              <span data-toggle-label>Show</span>
+            </button>
+          </div>
+          <p id="sign-up-password-hint" class="field-hint">Use at least 8 characters.</p>
+          <p id="sign-up-password-error" class="field-error" hidden></p>
+        </div>
+
+        <fieldset class="class-fieldset">
+          <legend class="field-label">Your class</legend>
+          <div class="class-grid">
+            <label class="class-option">
+              <input type="radio" name="class_year" value="Freshman" required>
+              <span class="class-card">
+                <span class="class-name">Freshman</span>
+                <span class="class-year">1st year</span>
+              </span>
+            </label>
+            <label class="class-option">
+              <input type="radio" name="class_year" value="Sophomore">
+              <span class="class-card">
+                <span class="class-name">Sophomore</span>
+                <span class="class-year">2nd year</span>
+              </span>
+            </label>
+            <label class="class-option">
+              <input type="radio" name="class_year" value="Junior">
+              <span class="class-card">
+                <span class="class-name">Junior</span>
+                <span class="class-year">3rd year</span>
+              </span>
+            </label>
+            <label class="class-option">
+              <input type="radio" name="class_year" value="Senior">
+              <span class="class-card">
+                <span class="class-name">Senior</span>
+                <span class="class-year">4th year</span>
+              </span>
+            </label>
+          </div>
+          <p id="class-error" class="field-error" hidden></p>
+        </fieldset>
+
+        <p id="form-message" class="form-message" role="alert" hidden></p>
+
+        <button class="btn btn-gold btn-block" type="submit">Create account</button>
+      </form>
+
+      <section id="sign-up-success" class="auth-success" aria-labelledby="sign-up-success-title" hidden>
+        <span class="auth-success-icon" aria-hidden="true">✓</span>
+        <h2 id="sign-up-success-title" tabindex="-1">Check your inbox</h2>
+        <p>We sent a confirmation link to <strong id="sign-up-success-email">your TBS email</strong>.</p>
+        <p class="muted">Open the link to confirm your address, then sign in. Check your spam folder if it does not arrive in a minute.</p>
+        <a class="btn btn-gold btn-block" href="./sign-in.html">Go to sign in</a>
+      </section>
+
+      <p class="auth-switch">Already racing? <a href="./sign-in.html">Sign in</a></p>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to create your account. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

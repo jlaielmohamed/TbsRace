@@ -1,0 +1,471 @@
+/* --------------------------------------------------------------------------
+   Stats page
+   -------------------------------------------------------------------------- */
+
+.page-stats #stats-content {
+  display: grid;
+  gap: clamp(16px, 2.6vw, 24px);
+}
+
+.page-stats #stats-alert {
+  margin-bottom: clamp(14px, 2.4vw, 20px);
+}
+
+.page-stats .error-card {
+  margin-bottom: 0;
+}
+
+/* Summary ----------------------------------------------------------------- */
+
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+/* Grids ------------------------------------------------------------------- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(14px, 2.4vw, 20px);
+  align-items: start;
+}
+
+.chart-card,
+.subject-card,
+.peak-card,
+.records-card {
+  min-width: 0;
+  padding: clamp(16px, 2.8vw, 24px);
+}
+
+/* Weekly chart ------------------------------------------------------------ */
+
+.week-chart {
+  --goal: 100%;
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  min-width: 0;
+}
+
+.week-goal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--muted-2);
+  font-size: 0.62rem;
+  line-height: 1.2;
+}
+
+.week-goal::before {
+  content: "";
+  width: 20px;
+  height: 0;
+  border-top: 1px dashed rgba(216, 180, 74, 0.5);
+}
+
+.week-bars {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: clamp(4px, 1.2vw, 10px);
+  height: clamp(150px, 26vw, 210px);
+  min-width: 0;
+}
+
+.week-col {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 100%;
+}
+
+.week-value {
+  overflow: hidden;
+  max-width: 100%;
+  height: 13px;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  background-image:
+    linear-gradient(
+      to top,
+      transparent calc(var(--goal) - 1px),
+      rgba(216, 180, 74, 0.28) calc(var(--goal) - 1px),
+      rgba(216, 180, 74, 0.28) var(--goal),
+      transparent var(--goal)
+    ),
+    linear-gradient(to top, rgba(244, 237, 225, 0.055), rgba(244, 237, 225, 0.02));
+}
+
+.week-bar {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  border-radius: 4px;
+  background: linear-gradient(to top, var(--gold-deep), var(--gold));
+  transition: height 500ms var(--ease);
+}
+
+.week-bar.is-today {
+  background: linear-gradient(to top, #2f9f77, var(--green));
+  box-shadow: 0 0 16px rgba(62, 209, 155, 0.18);
+}
+
+.week-day {
+  color: var(--muted-2);
+  font-size: 0.59rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.week-col:nth-last-child(-n + 2) .week-day {
+  color: var(--muted);
+}
+
+/* Subject breakdown ------------------------------------------------------- */
+
+.subject-list {
+  display: grid;
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.subject-row {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.subject-row-main {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.subject-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.subject-name {
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subject-percent {
+  flex: none;
+  color: var(--muted-2);
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.subject-track {
+  overflow: hidden;
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(244, 237, 225, 0.07);
+}
+
+.subject-track > span {
+  display: block;
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+}
+
+.subject-duration {
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Peak hours -------------------------------------------------------------- */
+
+.peak-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.peak-row {
+  display: grid;
+  gap: 5px;
+}
+
+.peak-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.peak-head strong {
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.peak-track {
+  overflow: hidden;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(244, 237, 225, 0.07);
+}
+
+.peak-track > span {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+}
+
+.peak-row:first-child .peak-track > span {
+  background: linear-gradient(90deg, #b98c2c, var(--gold-bright));
+}
+
+.peak-insight {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+/* Records ----------------------------------------------------------------- */
+
+.records-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.record {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: rgba(244, 237, 225, 0.022);
+}
+
+.record-label {
+  overflow: hidden;
+  color: var(--muted-2);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-value {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: clamp(0.98rem, 2.4vw, 1.2rem);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.record-note {
+  color: var(--muted-2);
+  font-size: 0.6rem;
+  line-height: 1.4;
+}
+
+/* Level summary ----------------------------------------------------------- */
+
+.level-card .text-link {
+  flex: none;
+}
+
+#stats-level .level-card-top {
+  margin-top: 14px;
+}
+
+/* Empty / error inside cards ---------------------------------------------- */
+
+.chart-card .empty-state,
+.subject-card .empty-state,
+.peak-card .empty-state,
+.level-card .empty-state,
+.level-card .error-state {
+  padding-block: 26px;
+}
+
+/* Responsive -------------------------------------------------------------- */
+
+@media (min-width: 520px) {
+  .stats-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .week-value {
+    font-size: 0.6rem;
+  }
+
+  .week-day {
+    font-size: 0.64rem;
+  }
+
+  .record {
+    padding: 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  .stats-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
+    gap: 18px;
+  }
+
+  .stats-grid-records {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .stats-summary {
+    gap: 12px;
+  }
+
+  .subject-list,
+  .peak-list {
+    margin-top: 20px;
+  }
+
+  .record {
+    padding: 15px;
+  }
+
+  .record-label {
+    font-size: 0.66rem;
+  }
+
+  .record-note {
+    font-size: 0.64rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-stats #stats-content {
+    gap: 24px;
+  }
+
+  .week-bars {
+    height: 200px;
+  }
+
+  .week-value {
+    font-size: 0.63rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .stats-grid {
+    gap: 22px;
+  }
+
+  .stats-grid-records {
+    gap: 22px;
+  }
+
+  .week-bars {
+    height: 220px;
+  }
+
+  .record {
+    padding: 17px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-summary {
+    gap: 7px;
+  }
+
+  .stat-card {
+    padding: 13px 12px 12px;
+  }
+
+  .week-bars {
+    gap: 3px;
+  }
+
+  .week-value {
+    font-size: 0.5rem;
+  }
+
+  .week-day {
+    font-size: 0.53rem;
+  }
+
+  .subject-row {
+    grid-template-columns: 7px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .subject-name {
+    font-size: 0.74rem;
+  }
+
+  .subject-duration {
+    font-size: 0.66rem;
+  }
+
+  .records-grid {
+    gap: 6px;
+  }
+
+  .record {
+    padding: 10px;
+  }
+
+  .record-value {
+    font-size: 0.92rem;
+  }
+
+  .record-note {
+    font-size: 0.56rem;
+  }
+}

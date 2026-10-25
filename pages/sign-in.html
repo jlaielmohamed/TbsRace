@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Sign in to TbsRace with your TBS email and keep racing.">
+  <title>Sign in · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/auth.css">
+  <script type="module" src="../js/auth.js"></script>
+</head>
+<body data-page="sign-in" data-auth-page="signin">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="auth"></div>
+
+  <main id="main" class="auth-main">
+    <section class="auth-shell" aria-labelledby="sign-in-title">
+      <header class="auth-heading">
+        <p class="eyebrow">Welcome back</p>
+        <h1 id="sign-in-title">Welcome back</h1>
+        <p class="auth-lede">Sign in with your TBS email to keep racing.</p>
+      </header>
+
+      <form id="sign-in-form" class="auth-form" novalidate>
+        <div class="field">
+          <label class="field-label" for="sign-in-email">TBS email</label>
+          <input id="sign-in-email" name="email" type="email" inputmode="email" autocomplete="email"
+            placeholder="you@tbs.edu" required aria-describedby="sign-in-email-hint sign-in-email-error">
+          <p id="sign-in-email-hint" class="field-hint">Only TBS email addresses can sign in.</p>
+          <p id="sign-in-email-error" class="field-error" hidden></p>
+        </div>
+
+        <div class="field">
+          <div class="field-label-row">
+            <label class="field-label" for="sign-in-password">Password</label>
+            <a class="field-link" href="./forgot-password.html">Forgot your password?</a>
+          </div>
+          <div class="input-with-action">
+            <input id="sign-in-password" name="password" type="password" autocomplete="current-password"
+              placeholder="Your password" required aria-describedby="sign-in-password-error">
+            <button class="password-toggle" type="button" data-target="sign-in-password"
+              aria-label="Show password" aria-pressed="false">
+              <span data-toggle-label>Show</span>
+            </button>
+          </div>
+          <p id="sign-in-password-error" class="field-error" hidden></p>
+        </div>
+
+        <p id="form-message" class="form-message" role="alert" hidden></p>
+
+        <button class="btn btn-gold btn-block" type="submit">Sign in</button>
+      </form>
+
+      <p class="auth-switch">New here? <a href="./sign-up.html">Create an account</a></p>
+    </section>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to sign you in. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Level up by studying. See your TbsRace level, the full ladder and how bonus progress works.">
+  <title>Levels · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/levels.css">
+  <script type="module" src="../js/levels.js"></script>
+</head>
+<body data-page="levels">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-levels">
+    <div class="container">
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow">Progression</p>
+          <h1>Level up by studying</h1>
+          <p class="page-lede">Every student has a level. It grows with your total study time and your daily streak.</p>
+        </div>
+      </header>
+
+      <div id="levels-alert" class="inline-alert inline-alert-info" role="note">
+        <span data-bonus-message>Daily goal: +0.25h · each streak day: +0.05h · capped at 2h.</span>
+      </div>
+
+      <div id="levels-error" class="card error-card" hidden role="alert">
+        <div class="error-state">
+          <span class="error-state-icon" aria-hidden="true">!</span>
+          <h2>Your level could not load</h2>
+          <p data-error-message>Check your connection and try again.</p>
+          <button id="levels-retry" class="btn btn-outline btn-small" type="button">Try again</button>
+        </div>
+      </div>
+
+      <div id="levels-content">
+        <section id="levels-hero" class="card level-hero" aria-live="polite">
+          <div class="skeleton-stack" aria-hidden="true">
+            <span class="skeleton-line skeleton-line-wide"></span>
+            <span class="skeleton-line"></span>
+            <span class="skeleton-line skeleton-line-wide"></span>
+          </div>
+        </section>
+
+        <section class="levels-section" aria-labelledby="levels-path-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">The ladder</p>
+              <h2 id="levels-path-title">Your path to Legend</h2>
+            </div>
+            <p>Each level needs more effective study hours than the last. Bonus progress counts toward the threshold.</p>
+          </div>
+          <div id="levels-grid" class="levels-grid"></div>
+        </section>
+
+        <section class="card bonus-explainer" aria-labelledby="bonus-title">
+          <div class="bonus-copy">
+            <p class="eyebrow">Bonus progress</p>
+            <h2 id="bonus-title">Small boosts, capped at <span id="levels-cap">2h</span></h2>
+            <p>Finish a day at or above your daily goal to earn <strong>+0.25h</strong> of bonus progress. Each day in your current streak adds <strong>+0.05h</strong>. Bonus progress is capped so study time stays the main driver.</p>
+          </div>
+          <div class="bonus-stats">
+            <div class="bonus-stat">
+              <strong id="levels-bonus">—</strong>
+              <span>Bonus earned</span>
+            </div>
+            <div class="bonus-stat">
+              <strong id="levels-streak">—</strong>
+              <span>Current streak</span>
+            </div>
+            <div class="bonus-stat">
+              <strong id="levels-goal-days">—</strong>
+              <span>Goal days</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <p id="levels-status" class="visually-hidden" aria-live="polite">Loading your level.</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to load your level. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="TbsRace is a study tracker and friendly leaderboard for TBS students.">
+  <title>TbsRace · Study leaderboard for TBS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/pages/index.css">
+  <script type="module" src="./js/index.js"></script>
+</head>
+<body class="boot-page">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <main id="main" class="boot-main">
+    <section class="boot-card" aria-labelledby="boot-title">
+      <a class="brand brand-large" href="./index.html" aria-label="TbsRace">
+        <span class="brand-tbs">Tbs</span><span class="brand-race">Race</span>
+      </a>
+      <div class="boot-orbit" aria-hidden="true">
+        <span class="boot-orbit-ring"></span>
+        <span class="boot-orbit-core">T</span>
+      </div>
+      <h1 id="boot-title" class="boot-title">Your race is loading</h1>
+      <p id="redirect-message" class="boot-message" role="status">Taking you to your study timer…</p>
+      <a id="redirect-action" class="btn btn-gold" href="./pages/sign-in.html" hidden>Continue to sign in</a>
+      <noscript>
+        <p class="boot-message">TbsRace needs JavaScript to track and save your study sessions.</p>
+      </noscript>
+    </section>
+  </main>
+</body>
+</html>

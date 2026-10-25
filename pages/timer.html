@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Start a focus session, track your study time and climb the TBS leaderboard.">
+  <title>Timer · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/timer.css">
+  <script type="module" src="../js/timer.js"></script>
+</head>
+<body data-page="timer">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-timer">
+    <div class="container">
+      <h1 class="visually-hidden">Focus timer</h1>
+
+      <div class="timer-layout">
+        <section class="card timer-card" aria-labelledby="timer-heading">
+          <h2 id="timer-heading" class="visually-hidden">Focus session</h2>
+
+          <div id="timer-ring-wrap" class="timer-ring-wrap">
+            <svg class="timer-ring" viewBox="0 0 320 320" aria-hidden="true" focusable="false">
+              <circle class="timer-ring-track" cx="160" cy="160" r="146"></circle>
+              <circle id="timer-ring-progress" class="timer-ring-progress" cx="160" cy="160" r="146"></circle>
+            </svg>
+            <div class="timer-ring-inner">
+              <div class="timer-status">
+                <span id="timer-dot" class="timer-dot" data-state="idle" aria-hidden="true"></span>
+                <span id="timer-status-text" class="timer-status-text">Ready to focus</span>
+              </div>
+              <div id="timer-display" class="timer-display" role="timer" aria-live="off">00:00:00</div>
+              <p id="timer-subline" class="timer-subline">of 1h 30m · ready when you are</p>
+            </div>
+          </div>
+
+          <div class="timer-form">
+            <div class="field">
+              <label class="field-label" for="subject-input">Subject name</label>
+              <input id="subject-input" name="subject" type="text" maxlength="40" autocomplete="off"
+                spellcheck="false" placeholder="Finance, Statistics, Law…" aria-describedby="subject-error">
+              <p id="subject-error" class="field-error" hidden></p>
+            </div>
+
+            <fieldset class="length-fieldset">
+              <legend class="field-label">Session time</legend>
+              <div id="length-chips" class="chip-row" role="group" aria-label="Preset session lengths"></div>
+              <div id="custom-length" class="custom-length">
+                <label class="custom-label" for="custom-minutes">Custom</label>
+                <div class="custom-input-wrap">
+                  <input id="custom-minutes" name="custom_minutes" type="number" min="1" max="720"
+                    inputmode="numeric" placeholder="90" aria-describedby="length-error">
+                  <span>min</span>
+                </div>
+              </div>
+              <p id="length-error" class="field-error" hidden></p>
+            </fieldset>
+
+            <div id="timer-alert" class="timer-alert" role="status" hidden>
+              <span class="timer-alert-icon" aria-hidden="true">◆</span>
+              <span data-alert-text>Time’s up — keep going or finish and save.</span>
+            </div>
+
+            <div class="timer-actions">
+              <button id="timer-toggle" class="btn btn-gold btn-timer" type="button">Start focus</button>
+              <button id="timer-finish" class="btn btn-outline btn-timer" type="button" disabled>Finish &amp; save</button>
+            </div>
+            <p class="timer-footnote">Sessions under one minute are discarded automatically.</p>
+          </div>
+        </section>
+
+        <aside class="timer-sidebar" aria-label="Today’s dashboard">
+          <section class="dashboard-stats" aria-label="Today at a glance">
+            <article class="stat-card stat-gold">
+              <p class="stat-label">Today</p>
+              <p id="today-total" class="stat-value">—</p>
+            </article>
+            <article class="stat-card stat-green">
+              <p class="stat-label">Streak</p>
+              <p id="streak-value" class="stat-value">—</p>
+            </article>
+            <article class="stat-card stat-blue">
+              <p class="stat-label">Your rank</p>
+              <p id="rank-value" class="stat-value">—</p>
+            </article>
+          </section>
+
+          <section class="card level-card" aria-labelledby="timer-level-heading">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Progress</p>
+                <h2 id="timer-level-heading">Your level</h2>
+              </div>
+              <a class="text-link" href="./levels.html">View levels <span aria-hidden="true">→</span></a>
+            </div>
+            <div id="timer-level" aria-live="polite">
+              <div class="skeleton-stack" aria-hidden="true">
+                <span class="skeleton-line skeleton-line-wide"></span>
+                <span class="skeleton-line"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="card sessions-card" aria-labelledby="today-sessions-heading">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Today</p>
+                <h2 id="today-sessions-heading">Today’s sessions</h2>
+              </div>
+              <a class="text-link" href="./leaderboard.html">See the full leaderboard <span aria-hidden="true">→</span></a>
+            </div>
+
+            <div id="dashboard-alert" class="inline-alert" role="status" hidden>
+              <span data-dashboard-alert-text>Some of your numbers could not load.</span>
+              <button id="dashboard-retry" class="btn btn-outline btn-small" type="button">Retry</button>
+            </div>
+
+            <div id="today-sessions" aria-live="polite">
+              <div class="skeleton-stack" aria-hidden="true">
+                <span class="skeleton-line skeleton-line-wide"></span>
+                <span class="skeleton-line"></span>
+                <span class="skeleton-line skeleton-line-wide"></span>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to run the timer. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

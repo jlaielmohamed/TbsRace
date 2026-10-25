@@ -1,0 +1,347 @@
+/* --------------------------------------------------------------------------
+   Levels page
+   -------------------------------------------------------------------------- */
+
+.page-levels #levels-content {
+  display: grid;
+  gap: clamp(18px, 3vw, 28px);
+}
+
+.page-levels .inline-alert {
+  margin-bottom: clamp(18px, 3vw, 26px);
+}
+
+.page-levels .error-card {
+  margin-bottom: 0;
+}
+
+/* Ladder ------------------------------------------------------------------ */
+
+.levels-section {
+  display: grid;
+  gap: 16px;
+}
+
+.section-heading {
+  display: grid;
+  gap: 8px;
+}
+
+.section-heading h2 {
+  margin-top: 3px;
+  font-size: clamp(1.22rem, 2.4vw, 1.6rem);
+}
+
+.section-heading > p {
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.levels-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 11px;
+}
+
+.level-node {
+  --accent: var(--gold);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 17px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.018), transparent 62%),
+    var(--card);
+  transition:
+    border-color 180ms var(--ease),
+    transform 180ms var(--ease);
+}
+
+.level-node::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 14px;
+  left: 14px;
+  height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.level-node.is-current {
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent);
+  background:
+    radial-gradient(320px 180px at 90% 0%, color-mix(in srgb, var(--accent) 13%, transparent), transparent 70%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.03), transparent 62%),
+    var(--card);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.24);
+}
+
+.level-node.is-current::before {
+  right: 0;
+  left: 0;
+  opacity: 1;
+}
+
+.level-node.is-locked {
+  background: rgba(15, 14, 11, 0.6);
+}
+
+.level-node.is-locked .level-node-medal,
+.level-node.is-locked h3 {
+  color: var(--muted);
+}
+
+.level-node-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.level-node-medal {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.level-node.is-current .level-node-medal {
+  border-color: transparent;
+  background: var(--accent);
+  color: #171204;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.level-node.is-complete .level-node-medal {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.level-node-copy {
+  min-width: 0;
+}
+
+.level-node-copy h3 {
+  overflow: hidden;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level-node-copy p {
+  margin-top: 2px;
+  color: var(--muted-2);
+  font-size: 0.66rem;
+  line-height: 1.35;
+}
+
+.level-node-status {
+  color: var(--muted);
+  font-size: 0.71rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.level-node.is-current .level-node-status {
+  color: color-mix(in srgb, var(--accent) 80%, var(--text));
+}
+
+.level-node.is-complete .level-node-status {
+  color: var(--green);
+}
+
+.level-node-progress {
+  height: 6px;
+}
+
+.level-node-progress > span {
+  background: var(--accent);
+}
+
+.level-node-note {
+  margin-top: auto;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  color: var(--muted-2);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+/* Bonus explainer --------------------------------------------------------- */
+
+.bonus-explainer {
+  display: grid;
+  gap: 20px;
+  padding: clamp(20px, 3.4vw, 32px);
+}
+
+.bonus-copy {
+  max-width: 60ch;
+}
+
+.bonus-copy h2 {
+  margin-top: 4px;
+  font-size: clamp(1.25rem, 2.6vw, 1.65rem);
+}
+
+.bonus-copy h2 span {
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.bonus-copy > p:last-child {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.bonus-copy strong {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.bonus-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bonus-stat {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: rgba(244, 237, 225, 0.022);
+  text-align: center;
+}
+
+.bonus-stat strong {
+  overflow: hidden;
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: clamp(0.95rem, 2.4vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bonus-stat span {
+  color: var(--muted-2);
+  font-size: 0.6rem;
+  line-height: 1.3;
+}
+
+/* Responsive -------------------------------------------------------------- */
+
+@media (min-width: 560px) {
+  .levels-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+  }
+
+  .level-node {
+    padding: 19px 18px 18px;
+  }
+
+  .bonus-stat span {
+    font-size: 0.66rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .section-heading {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    align-items: end;
+    gap: 32px;
+  }
+
+  .section-heading > p {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .bonus-explainer {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+    align-items: center;
+    gap: 32px;
+  }
+
+  .bonus-stat {
+    padding: 18px 10px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .levels-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .page-levels #levels-content {
+    gap: 30px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .levels-grid {
+    gap: 15px;
+  }
+
+  .level-node {
+    padding: 21px 20px 20px;
+  }
+
+  .level-node-copy h3 {
+    font-size: 1.05rem;
+  }
+
+  .level-node-note {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 359px) {
+  .level-node {
+    padding: 14px 13px 13px;
+  }
+
+  .level-node-medal {
+    width: 34px;
+    height: 34px;
+    font-size: 0.82rem;
+  }
+
+  .bonus-stats {
+    gap: 6px;
+  }
+
+  .bonus-stat {
+    padding: 11px 5px;
+  }
+
+  .bonus-stat span {
+    font-size: 0.54rem;
+  }
+}

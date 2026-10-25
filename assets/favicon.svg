@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TbsRace">
+  <rect width="64" height="64" rx="15" fill="#0a0a09"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="14.25" fill="none" stroke="#d8b44a" stroke-opacity="0.35" stroke-width="1.5"/>
+  <path d="M16 17h32v9H35v25h-9V26H16z" fill="#d8b44a"/>
+  <path d="M42 17h6v9h-6z" fill="#e9c95f"/>
+  <circle cx="47" cy="47" r="4.5" fill="#3ed19b"/>
+  <path d="M39 43h-8" stroke="#d8b44a" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round"/>
+</svg>

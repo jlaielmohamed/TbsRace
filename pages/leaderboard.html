@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="See who is studying the hardest at TBS today, this month and all time.">
+  <title>Leaderboard · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/leaderboard.css">
+  <script type="module" src="../js/leaderboard.js"></script>
+</head>
+<body data-page="leaderboard">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-leaderboard">
+    <div class="container container-narrow">
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow">The race</p>
+          <h1>Leaderboard</h1>
+          <p class="page-lede">See who is studying the hardest at TBS today, this month and all time.</p>
+        </div>
+        <div class="period-tabs" role="tablist" aria-label="Leaderboard period">
+          <button class="period-tab is-selected" type="button" role="tab" id="tab-period-today"
+            data-period="today" aria-selected="true" aria-controls="leaderboard-panel" tabindex="0">Today</button>
+          <button class="period-tab" type="button" role="tab" id="tab-period-month"
+            data-period="month" aria-selected="false" aria-controls="leaderboard-panel" tabindex="-1">This month</button>
+          <button class="period-tab" type="button" role="tab" id="tab-period-all"
+            data-period="all" aria-selected="false" aria-controls="leaderboard-panel" tabindex="-1">All time</button>
+        </div>
+      </header>
+
+      <section id="leaderboard-panel" class="card leaderboard-panel" role="tabpanel"
+        aria-labelledby="tab-period-today" aria-live="polite">
+        <div class="leaderboard-columns" aria-hidden="true">
+          <span>Rank</span>
+          <span>Student</span>
+          <span>Level</span>
+          <span>Time</span>
+        </div>
+        <ol id="leaderboard-list" class="leaderboard-list">
+          <li class="leaderboard-row leaderboard-row-skeleton" aria-hidden="true">
+            <span class="skeleton-dot"></span>
+            <span class="skeleton-line skeleton-line-name"></span>
+            <span class="skeleton-line skeleton-line-chip"></span>
+            <span class="skeleton-line skeleton-line-time"></span>
+          </li>
+          <li class="leaderboard-row leaderboard-row-skeleton" aria-hidden="true">
+            <span class="skeleton-dot"></span>
+            <span class="skeleton-line skeleton-line-name"></span>
+            <span class="skeleton-line skeleton-line-chip"></span>
+            <span class="skeleton-line skeleton-line-time"></span>
+          </li>
+          <li class="leaderboard-row leaderboard-row-skeleton" aria-hidden="true">
+            <span class="skeleton-dot"></span>
+            <span class="skeleton-line skeleton-line-name"></span>
+            <span class="skeleton-line skeleton-line-chip"></span>
+            <span class="skeleton-line skeleton-line-time"></span>
+          </li>
+        </ol>
+        <p id="leaderboard-note" class="leaderboard-note">Loading the race…</p>
+      </section>
+
+      <section id="leaderboard-you" class="card leaderboard-you" hidden aria-labelledby="leaderboard-you-title">
+        <div class="leaderboard-you-head">
+          <div>
+            <p class="eyebrow">Your position</p>
+            <h2 id="leaderboard-you-title">Just outside the top 10</h2>
+          </div>
+          <span class="leaderboard-you-hint">Keep going — every session counts.</span>
+        </div>
+        <ol id="leaderboard-you-list" class="leaderboard-you-list"></ol>
+      </section>
+
+      <p class="leaderboard-footnote">
+        Rankings use finished sessions only. Names are visible to other TBS students; email addresses are never shown.
+      </p>
+      <p id="leaderboard-status" class="visually-hidden" aria-live="polite">Loading leaderboard.</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to load the leaderboard. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

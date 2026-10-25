@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Your study time, your best hours and how you are progressing at TBS.">
+  <title>My stats · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/stats.css">
+  <script type="module" src="../js/stats.js"></script>
+</head>
+<body data-page="stats">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-stats">
+    <div class="container">
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow">Insights</p>
+          <h1>My stats</h1>
+          <p class="page-lede">Your study time, your best hours and how you are progressing.</p>
+        </div>
+      </header>
+
+      <div id="stats-alert" class="inline-alert" role="status" hidden>
+        <span data-alert-message>Some details could not load.</span>
+      </div>
+
+      <div id="stats-error" class="card error-card" hidden></div>
+
+      <div id="stats-content">
+        <section class="stats-summary" aria-label="Study time summary">
+          <article class="stat-card stat-gold">
+            <p class="stat-label">Today</p>
+            <p id="stats-today" class="stat-value">—</p>
+          </article>
+          <article class="stat-card stat-green">
+            <p class="stat-label">This week</p>
+            <p id="stats-week" class="stat-value">—</p>
+          </article>
+          <article class="stat-card stat-coral">
+            <p class="stat-label">This month</p>
+            <p id="stats-month" class="stat-value">—</p>
+          </article>
+          <article class="stat-card stat-blue">
+            <p class="stat-label">All time</p>
+            <p id="stats-all" class="stat-value">—</p>
+          </article>
+        </section>
+
+        <div class="stats-grid">
+          <section class="card chart-card" aria-labelledby="week-chart-title">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">This week</p>
+                <h2 id="week-chart-title">Hours studied per day</h2>
+              </div>
+              <span id="week-chart-total" class="section-meta">—</span>
+            </div>
+            <div id="week-chart" class="week-chart">
+              <div class="skeleton-stack" aria-hidden="true">
+                <span class="skeleton-line skeleton-line-wide"></span>
+                <span class="skeleton-line"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="card subject-card" aria-labelledby="subject-title">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">All time</p>
+                <h2 id="subject-title">Time by subject</h2>
+              </div>
+            </div>
+            <div id="subject-breakdown">
+              <div class="skeleton-stack" aria-hidden="true">
+                <span class="skeleton-line skeleton-line-wide"></span>
+                <span class="skeleton-line"></span>
+                <span class="skeleton-line skeleton-line-wide"></span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="stats-grid stats-grid-records">
+          <section class="card peak-card" aria-labelledby="peak-title">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">All time</p>
+                <h2 id="peak-title">When you study best</h2>
+              </div>
+            </div>
+            <div id="peak-breakdown"></div>
+            <p id="peak-insight" class="peak-insight">Start studying to see your strongest time of day.</p>
+          </section>
+
+          <section class="card records-card" aria-labelledby="records-title">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">All time</p>
+                <h2 id="records-title">Your records</h2>
+              </div>
+            </div>
+            <div class="records-grid">
+              <div class="record">
+                <span class="record-label">Longest session</span>
+                <strong id="record-longest" class="record-value">—</strong>
+                <span id="record-longest-note" class="record-note">No sessions yet</span>
+              </div>
+              <div class="record">
+                <span class="record-label">Longest streak</span>
+                <strong id="record-streak" class="record-value">—</strong>
+                <span class="record-note">Consecutive study days</span>
+              </div>
+              <div class="record">
+                <span class="record-label">Best day</span>
+                <strong id="record-best-day" class="record-value">—</strong>
+                <span id="record-best-day-note" class="record-note">No study day yet</span>
+              </div>
+              <div class="record">
+                <span class="record-label">Best rank this month</span>
+                <strong id="record-rank" class="record-value">—</strong>
+                <span id="record-rank-note" class="record-note">No ranked day this month</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="card level-card" aria-labelledby="stats-level-title">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Progress</p>
+              <h2 id="stats-level-title">Your level</h2>
+            </div>
+            <a class="text-link" href="./levels.html">View levels <span aria-hidden="true">→</span></a>
+          </div>
+          <div id="stats-level">
+            <div class="skeleton-stack" aria-hidden="true">
+              <span class="skeleton-line skeleton-line-wide"></span>
+              <span class="skeleton-line"></span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <p id="stats-status" class="visually-hidden" aria-live="polite">Loading your stats.</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to load your stats. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

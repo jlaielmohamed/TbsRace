@@ -1,0 +1,86 @@
+/* --------------------------------------------------------------------------
+   Boot / redirect page
+   -------------------------------------------------------------------------- */
+
+.boot-page {
+  background:
+    radial-gradient(700px 500px at 50% 30%, rgba(216, 180, 74, 0.1), transparent 65%),
+    var(--bg);
+}
+
+.boot-main {
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  padding: 32px 20px calc(32px + env(safe-area-inset-bottom));
+}
+
+.boot-card {
+  display: grid;
+  justify-items: center;
+  gap: 13px;
+  width: 100%;
+  max-width: 460px;
+  text-align: center;
+}
+
+.boot-card .brand {
+  margin-bottom: 18px;
+}
+
+.boot-orbit {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 106px;
+  aspect-ratio: 1;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: 0 0 70px rgba(216, 180, 74, 0.11);
+}
+
+.boot-orbit-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) 0 18%, rgba(244, 237, 225, 0.08) 18% 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: boot-spin 2.4s linear infinite;
+}
+
+.boot-orbit-core {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border: 1px solid var(--line-gold);
+  border-radius: 50%;
+  background: var(--gold-wash);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.boot-title {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.boot-message {
+  max-width: 38ch;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.boot-card .btn {
+  margin-top: 12px;
+}
+
+@keyframes boot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
