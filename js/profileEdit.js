@@ -1,7 +1,14 @@
 import { refreshHeaderIdentity } from './nav.js';
 import { requireAuth } from './guard.js';
-import { getProfile, clearProfileCache } from './profile.js';
+import { getProfile, clearProfileCache, isMissingAvatarColumn } from './profile.js';
 import { supabase } from './supabaseClient.js';
+import {
+  AVATAR_FEATURE,
+  getSignedFileUrl,
+  removeStoredFile,
+  uploadImage,
+  validateImageFile
+} from './storage.js';
 import { initials } from './utils.js';
 import {
   friendlyError,
@@ -25,7 +32,13 @@ const elements = {
   classError: document.getElementById('profile-class-error'),
   message: document.getElementById('profile-message'),
   save: document.getElementById('profile-save'),
-  previewAvatar: document.getElementById('profile-preview-avatar'),
+  avatarInput: document.getElementById('profile-avatar-input'),
+  avatarError: document.getElementById('profile-avatar-error'),
+  avatarRemove: document.getElementById('profile-avatar-remove'),
+  avatarPhoto: document.getElementById('profile-avatar-photo'),
+  avatarInitials: document.getElementById('profile-avatar-initials'),
+  previewPhoto: document.getElementById('profile-preview-photo'),
+  previewInitials: document.getElementById('profile-preview-initials'),
   previewName: document.getElementById('profile-preview-name'),
   previewClass: document.getElementById('profile-preview-class'),
   previewGoal: document.getElementById('profile-preview-goal')
@@ -38,6 +51,11 @@ let session = null;
 let currentProfile = null;
 let loading = false;
 let saving = false;
+let savedAvatarPath = null;
+let pendingAvatarFile = null;
+let pendingAvatarUrl = null;
+let avatarRemoved = false;
+let avatarRenderToken = 0;
 
 function setStatus(message) {
   if (elements.status) elements.status.textContent = message;
@@ -52,12 +70,136 @@ function goalValue() {
   return Number.isInteger(value) ? value : null;
 }
 
+function revokePendingAvatarUrl() {
+  if (pendingAvatarUrl) URL.revokeObjectURL(pendingAvatarUrl);
+  pendingAvatarUrl = null;
+}
+
+function clearPendingAvatar() {
+  pendingAvatarFile = null;
+  revokePendingAvatarUrl();
+}
+
+function setAvatarPhotos(url) {
+  [elements.avatarPhoto, elements.previewPhoto].forEach((photo) => {
+    if (!photo) return;
+    if (url) {
+      photo.src = url;
+      photo.hidden = false;
+    } else {
+      photo.removeAttribute('src');
+      photo.hidden = true;
+    }
+  });
+}
+
+function setAvatarInitials(name) {
+  const value = initials(name);
+  if (elements.avatarInitials) elements.avatarInitials.textContent = value;
+  if (elements.previewInitials) elements.previewInitials.textContent = value;
+}
+
+async function renderSavedAvatar(path) {
+  const token = (avatarRenderToken += 1);
+  if (!path) {
+    setAvatarPhotos('');
+    return;
+  }
+
+  try {
+    const url = await getSignedFileUrl(path);
+    if (token !== avatarRenderToken) return;
+    setAvatarPhotos(url);
+  } catch {
+    if (token !== avatarRenderToken) return;
+    setAvatarPhotos('');
+  }
+}
+
+function syncAvatarControls() {
+  if (!elements.avatarRemove) return;
+
+  if (pendingAvatarFile) {
+    elements.avatarRemove.hidden = false;
+    elements.avatarRemove.textContent = 'Clear selection';
+  } else if (savedAvatarPath) {
+    elements.avatarRemove.hidden = false;
+    elements.avatarRemove.textContent = avatarRemoved ? 'Keep current photo' : 'Remove photo';
+  } else {
+    elements.avatarRemove.hidden = true;
+    elements.avatarRemove.textContent = 'Remove photo';
+  }
+}
+
+function handleAvatarChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  setFieldError(elements.avatarInput, elements.avatarError, '');
+
+  try {
+    validateImageFile(file);
+  } catch (error) {
+    setFieldError(
+      elements.avatarInput,
+      elements.avatarError,
+      friendlyError(error, 'Choose a JPG, PNG or WebP image smaller than 5 MB.')
+    );
+    event.target.value = '';
+    return;
+  }
+
+  clearPendingAvatar();
+  pendingAvatarFile = file;
+  pendingAvatarUrl = URL.createObjectURL(file);
+  avatarRemoved = false;
+  avatarRenderToken += 1;
+  setAvatarPhotos(pendingAvatarUrl);
+  syncAvatarControls();
+  event.target.value = '';
+  setStatus('New profile picture selected. Save your profile to upload it.');
+}
+
+function handleAvatarRemove() {
+  if (saving || (!pendingAvatarFile && !savedAvatarPath)) return;
+
+  setFieldError(elements.avatarInput, elements.avatarError, '');
+  if (elements.avatarInput) elements.avatarInput.value = '';
+
+  if (pendingAvatarFile) {
+    clearPendingAvatar();
+    avatarRemoved = false;
+    syncAvatarControls();
+    if (savedAvatarPath) renderSavedAvatar(savedAvatarPath);
+    else {
+      avatarRenderToken += 1;
+      setAvatarPhotos('');
+    }
+    setStatus('Photo selection cleared.');
+    return;
+  }
+
+  if (avatarRemoved) {
+    avatarRemoved = false;
+    syncAvatarControls();
+    renderSavedAvatar(savedAvatarPath);
+    setStatus('Current profile picture kept.');
+    return;
+  }
+
+  avatarRemoved = true;
+  avatarRenderToken += 1;
+  syncAvatarControls();
+  setAvatarPhotos('');
+  setStatus('Profile picture will be removed when you save.');
+}
+
 function updatePreview() {
   const name = elements.name?.value.trim() || 'Student';
   const classYear = selectedClass();
   const goal = goalValue();
 
-  if (elements.previewAvatar) elements.previewAvatar.textContent = initials(name);
+  setAvatarInitials(name);
   if (elements.previewName) elements.previewName.textContent = name;
   if (elements.previewClass) elements.previewClass.textContent = classYear || 'No class selected';
   if (elements.previewGoal) {
@@ -72,6 +214,14 @@ function fillForm(profile, user) {
   classInputs.forEach((input) => {
     input.checked = input.value === profile.class_year;
   });
+
+  savedAvatarPath = profile.avatar_path || null;
+  avatarRemoved = false;
+  clearPendingAvatar();
+  setFieldError(elements.avatarInput, elements.avatarError, '');
+  if (elements.avatarInput) elements.avatarInput.value = '';
+  syncAvatarControls();
+  renderSavedAvatar(savedAvatarPath);
   updatePreview();
 }
 
@@ -166,43 +316,135 @@ async function handleSubmit(event) {
     return;
   }
 
+  const uploadFile = pendingAvatarFile;
+  if (uploadFile) {
+    try {
+      validateImageFile(uploadFile);
+    } catch (error) {
+      setFieldError(
+        elements.avatarInput,
+        elements.avatarError,
+        friendlyError(error, 'Choose a JPG, PNG or WebP image smaller than 5 MB.')
+      );
+      elements.avatarRemove?.focus();
+      return;
+    }
+  }
+
   const fullName = elements.name.value.trim();
   const classYear = selectedClass();
   const dailyGoal = goalValue();
+  const previousAvatarPath = savedAvatarPath;
 
   saving = true;
   setButtonBusy(elements.save, true, 'Saving…');
 
+  let uploadedPath = null;
+  let cleanupFailed = false;
+
   try {
+    if (uploadFile) {
+      const uploaded = await uploadImage({
+        userId: session.user.id,
+        file: uploadFile,
+        featureName: AVATAR_FEATURE,
+        itemId: session.user.id
+      });
+      uploadedPath = uploaded.path;
+    }
+
+    const update = {
+      full_name: fullName,
+      class_year: classYear,
+      daily_goal_minutes: dailyGoal
+    };
+    const avatarChanged = Boolean(uploadedPath) || (avatarRemoved && Boolean(previousAvatarPath));
+    if (uploadedPath) update.avatar_path = uploadedPath;
+    else if (avatarRemoved && previousAvatarPath) update.avatar_path = null;
+
+    // Before the column exists, ordinary profile saves still work. Only the
+    // selected columns change, so a database without avatar_path keeps working
+    // until the schema migration is run.
+    const columns = avatarChanged
+      ? 'full_name, class_year, daily_goal_minutes, avatar_path'
+      : 'full_name, class_year, daily_goal_minutes';
+
     const { data, error } = await supabase
       .from('profiles')
-      .update({
-        full_name: fullName,
-        class_year: classYear,
-        daily_goal_minutes: dailyGoal
-      })
+      .update(update)
       .eq('id', session.user.id)
-      .select('full_name, class_year, daily_goal_minutes')
+      .select(columns)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (avatarChanged && isMissingAvatarColumn(error)) {
+        const friendly = new Error(error.message);
+        friendly.code = error.code;
+        friendly.userMessage =
+          'Profile pictures are not enabled yet. Ask an admin to run the latest database schema.';
+        throw friendly;
+      }
+      throw error;
+    }
+
+    const nextAvatarPath = uploadedPath
+      ? uploadedPath
+      : avatarRemoved
+        ? null
+        : (data?.avatar_path ?? previousAvatarPath ?? null);
 
     const savedProfile = {
       ...(currentProfile ?? {}),
       ...(data ?? {}),
       full_name: String(data?.full_name ?? fullName).trim(),
       class_year: data?.class_year ?? classYear,
-      daily_goal_minutes: Number(data?.daily_goal_minutes ?? dailyGoal)
+      daily_goal_minutes: Number(data?.daily_goal_minutes ?? dailyGoal),
+      avatar_path: nextAvatarPath
     };
 
     currentProfile = savedProfile;
     clearProfileCache();
+
+    savedAvatarPath = nextAvatarPath;
+    avatarRemoved = false;
+
+    if (uploadedPath) {
+      clearPendingAvatar();
+      await renderSavedAvatar(savedAvatarPath);
+    } else if (!nextAvatarPath) {
+      avatarRenderToken += 1;
+      setAvatarPhotos('');
+    }
+
+    if (previousAvatarPath && previousAvatarPath !== savedAvatarPath) {
+      try {
+        await removeStoredFile(previousAvatarPath, { userId: session.user.id });
+      } catch {
+        cleanupFailed = true;
+      }
+    }
+
+    syncAvatarControls();
+    if (elements.avatarInput) elements.avatarInput.value = '';
     refreshHeaderIdentity(savedProfile);
     updatePreview();
     setFormMessage(elements.message, 'Your profile has been saved.', 'success');
-    showToast('Profile saved.', 'success');
+    showToast(
+      cleanupFailed
+        ? 'Profile saved. The old photo could not be deleted from storage.'
+        : 'Profile saved.',
+      cleanupFailed ? 'error' : 'success'
+    );
     setStatus('Your profile has been saved.');
   } catch (error) {
+    if (uploadedPath) {
+      try {
+        await removeStoredFile(uploadedPath, { userId: session.user.id });
+      } catch {
+        // No database row points at the new object, so it is safe to leave an
+        // orphan rather than hide the save error behind a cleanup error.
+      }
+    }
     setFormMessage(
       elements.message,
       friendlyError(error, 'We could not save your profile. Please try again.')
@@ -216,6 +458,9 @@ async function handleSubmit(event) {
 
 function bindEvents() {
   elements.form?.addEventListener('submit', handleSubmit);
+
+  elements.avatarInput?.addEventListener('change', handleAvatarChange);
+  elements.avatarRemove?.addEventListener('click', handleAvatarRemove);
 
   elements.name?.addEventListener('input', () => {
     setFieldError(elements.name, elements.nameError, '');

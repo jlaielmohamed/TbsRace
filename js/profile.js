@@ -6,6 +6,46 @@ let cachedProfile = null;
 let cachedUserId = null;
 let inflight = null;
 
+const PROFILE_COLUMNS =
+  'id, full_name, class_year, daily_goal_minutes, avatar_path, created_at';
+const PROFILE_COLUMNS_WITHOUT_AVATAR =
+  'id, full_name, class_year, daily_goal_minutes, created_at';
+
+/** True when the database predates `profiles.avatar_path`. */
+export function isMissingAvatarColumn(error) {
+  if (!error) return false;
+  const code = String(error.code ?? '').toUpperCase();
+  const message = String(error.message ?? '').toLowerCase();
+  return (
+    code === '42703' ||
+    code === 'PGRST204' ||
+    (message.includes('avatar_path') &&
+      (message.includes('does not exist') || message.includes('schema cache')))
+  );
+}
+
+/**
+ * Read the profile row. Before `schema.sql` adds avatar_path, fall back to the
+ * previous column list so the rest of the app keeps working during rollout.
+ */
+async function readProfileRow(userId) {
+  let result = await supabase
+    .from('profiles')
+    .select(PROFILE_COLUMNS)
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (isMissingAvatarColumn(result.error)) {
+    result = await supabase
+      .from('profiles')
+      .select(PROFILE_COLUMNS_WITHOUT_AVATAR)
+      .eq('id', userId)
+      .maybeSingle();
+  }
+
+  return result;
+}
+
 export function clearProfileCache() {
   cachedProfile = null;
   cachedUserId = null;
@@ -34,11 +74,7 @@ export async function getProfile({ force = false } = {}) {
 
   cachedUserId = user.id;
   inflight = (async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, class_year, daily_goal_minutes, created_at')
-      .eq('id', user.id)
-      .maybeSingle();
+    const { data, error } = await readProfileRow(user.id);
 
     if (error) throw error;
     if (!data) {
@@ -51,7 +87,8 @@ export async function getProfile({ force = false } = {}) {
       ...data,
       full_name: String(data.full_name ?? '').trim(),
       class_year: data.class_year || 'Freshman',
-      daily_goal_minutes: toNumber(data.daily_goal_minutes, DAILY_GOAL_DEFAULT_MINUTES)
+      daily_goal_minutes: toNumber(data.daily_goal_minutes, DAILY_GOAL_DEFAULT_MINUTES),
+      avatar_path: data.avatar_path || null
     };
     inflight = null;
     return cachedProfile;

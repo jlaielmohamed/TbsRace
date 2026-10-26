@@ -21,6 +21,47 @@
   margin-top: 20px;
 }
 
+.avatar-editor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.avatar-editor-image {
+  width: 72px;
+  height: 72px;
+  font-size: 1.15rem;
+}
+
+.avatar-editor-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.avatar-editor-copy .field-label,
+.avatar-editor-copy .field-hint {
+  margin: 0;
+}
+
+.avatar-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.avatar-upload-button {
+  cursor: pointer;
+}
+
+.avatar-upload-button:focus-within {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
 .page-profile .class-fieldset[aria-invalid="true"] .class-card {
   border-color: var(--coral);
 }
@@ -75,11 +116,13 @@
 }
 
 .preview-avatar {
+  position: relative;
   display: grid;
   place-items: center;
   width: 54px;
   height: 54px;
   flex: none;
+  overflow: hidden;
   border: 1px solid var(--line-gold);
   border-radius: 50%;
   background:
@@ -90,6 +133,12 @@
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.preview-avatar .avatar-photo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
 }
 
 .preview-copy {

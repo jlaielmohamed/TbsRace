@@ -1,6 +1,8 @@
 # TbsRace database
 
-Everything the app needs from Supabase is in [`schema.sql`](./schema.sql). Run the whole file once in the **SQL Editor** of a fresh project. It is idempotent, so you can run it again after changing a mirrored constant or updating the schema.
+Everything the app needs in Postgres is in [`schema.sql`](./schema.sql). Run the whole file once in the **SQL Editor** of a fresh project. It is idempotent, so you can run it again after changing a mirrored constant or updating the schema.
+
+The private `app-files` Storage bucket and its object policies are created in the Supabase dashboard, not by `schema.sql`. See [Storage](#storage).
 
 For the full application setup, deployment and manual checklist, start with the [root README](../README.md).
 
@@ -12,10 +14,10 @@ For the full application setup, deployment and manual checklist, start with the 
 
 | Table | Purpose |
 | --- | --- |
-| `public.profiles` | Display name, class year and daily goal for every auth user |
+| `public.profiles` | Display name, class year, daily goal and profile-picture path for every auth user |
 | `public.study_sessions` | Immutable completed study sessions |
 
-`profiles.id` and `study_sessions.user_id` reference `auth.users(id)` with `on delete cascade`. Deleting a user therefore removes their profile, sessions and leaderboard presence.
+`profiles.id` and `study_sessions.user_id` reference `auth.users(id)` with `on delete cascade`. Deleting a user therefore removes their profile, sessions and leaderboard presence. Storage objects are not deleted by a database cascade; remove them with the Storage API or the dashboard.
 
 ### Triggers on `auth.users`
 
@@ -30,6 +32,90 @@ The profile trigger falls back to the local part of the email if no `full_name` 
 ### Other triggers
 
 - `profiles_set_updated_at` maintains `profiles.updated_at`.
+
+### Storage
+
+The app uses one private bucket, **`app-files`**, for profile pictures and any future uploads. `schema.sql` does not create the bucket; configure it once under **Storage → Buckets**. The current project already has it.
+
+#### Path convention
+
+Every object must start with the signed-in user id:
+
+```text
+<auth.uid()>/<featureName>/<itemId>/<uuid>.<extension>
+```
+
+The current feature is the profile picture:
+
+```text
+<auth.uid()>/profile/<auth.uid()>/<uuid>.jpg
+```
+
+`js/storage.js` builds this path. A check constraint on `profiles.avatar_path` accepts only the user's own `/profile/` folder and a `.jpg`, `.jpeg`, `.png` or `.webp` suffix. Store the object path, never a public or signed URL.
+
+#### Bucket and policies
+
+Create the bucket with **Public bucket off**, then add four policies on `storage.objects` for `authenticated`. `(storage.foldername(name))[1]` is the first path segment, so it equals the owner's user id for a valid path:
+
+```sql
+create policy "TbsRace: read own app files"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+create policy "TbsRace: insert own app files"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+create policy "TbsRace: update own app files"
+  on storage.objects for update to authenticated
+  using (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  )
+  with check (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+create policy "TbsRace: delete own app files"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+```
+
+If these policy names already exist, do not create duplicates. Policies are the security boundary; the path builder and check constraint are defence in depth. Set the bucket's file-size limit to **5 MB** to mirror the frontend check.
+
+#### Display and deletion
+
+- The bucket is private, so `getSignedFileUrl()` calls `createSignedUrl(path, 3600)` and the page displays that URL. The client caches signed URLs per page and refreshes them after expiry.
+- **Upload:** upload the object → write `avatar_path` to `profiles` → delete the previous object. If the profile update fails, the new object is removed immediately.
+- **Remove:** set `avatar_path = null` → delete the object. The database reference is cleared first so a failed Storage delete never leaves a broken image.
+- `removeStoredFile(path, { userId })` refuses paths that do not start with the given user id.
+
+#### Verify
+
+Inspect references and the bucket:
+
+```sql
+select id, full_name, avatar_path
+from public.profiles
+where avatar_path is not null;
+
+select name, owner, created_at
+from storage.objects
+where bucket_id = 'app-files'
+order by created_at desc;
+```
+
+An orphan is an object with no matching `profiles.avatar_path`; remove it in **Storage → app-files**. Never delete an object while its path is still stored in a row.
 
 ### RPCs
 
@@ -90,7 +176,8 @@ The profile trigger falls back to the local part of the email if no `full_name` 
 - RLS is enabled on both tables.
 - `profiles`: select/update only rows where `id = auth.uid()`. Students cannot insert profiles directly; the auth trigger does that with definer rights.
 - `study_sessions`: select/insert only rows where `user_id = auth.uid()`. There is no update or delete policy, so history is immutable from the client.
-- Table grants are column-scoped. This prevents changing `profiles.id`, `created_at`, `updated_at` or writing a session for another user even if a future policy were too broad.
+- Table grants are column-scoped. This prevents changing `profiles.id`, `created_at`, `updated_at` or writing a session for another user even if a future policy were too broad. The writable profile columns are `full_name`, `class_year`, `daily_goal_minutes` and `avatar_path`.
+- `app-files` is private, and its Storage policies restrict every read/write/delete to objects whose first path segment equals `auth.uid()`. The `profiles.avatar_path` check constraint enforces the `<id>/profile/<id>/<uuid>.<ext>` shape as a second layer.
 - `anon` has no table privileges and no RPC execute privileges.
 - The leaderboard and best-rank functions are `security definer` but return only the minimum fields needed by the UI.
 - All definer functions pin `search_path = public, pg_temp`.
@@ -235,6 +322,7 @@ The database is the source of truth for progress, bonus and ranking. Change both
 | Goal-day bonus | `GOAL_DAY_BONUS_HOURS` | `public.goal_day_bonus_hours()` |
 | Streak-day bonus | `STREAK_DAY_BONUS_HOURS` | `public.streak_day_bonus_hours()` |
 | Bonus cap | `MAX_LEVEL_BONUS_HOURS` | `public.max_level_bonus_hours()` |
+| Profile-picture limit | `MAX_IMAGE_BYTES` in `js/storage.js` | `app-files` bucket file-size limit |
 
 After editing `schema.sql`, either rerun the whole file or run only the changed `create or replace function` statements. Rerunning the whole file is safe; it does not drop data.
 
@@ -315,7 +403,7 @@ drop function if exists public.enforce_tbs_email_domain();
 drop function if exists public.tbs_email_domain();
 ```
 
-Then run `schema.sql` again. Existing auth users will not automatically get profiles until you backfill them; the root README includes a backfill query.
+Then run `schema.sql` again. Existing auth users will not automatically get profiles until you backfill them; the root README includes a backfill query. Storage objects in `app-files` are not removed by dropping these tables; empty the bucket separately in the dashboard if you are throwing the project away.
 
 ---
 
@@ -325,7 +413,10 @@ Then run `schema.sql` again. Existing auth users will not automatically get prof
 | --- | --- | --- |
 | `Only @tbs.u-tunis.tn email addresses may create a TbsRace account.` | An older database still runs the removed domain trigger | Rerun `supabase/schema.sql`; it drops the trigger |
 | `Database error saving new user` | Auth insert failed inside a trigger | Check Postgres/Auth logs; rerun `schema.sql`; verify the profile trigger exists |
-| `new row violates row-level security policy` | A client tried to write another user's data or update a session | Expected. Keep RLS on; do not add update/delete policies for sessions |
+| `new row violates row-level security policy` | A client tried to write another user's row or upload outside its own Storage folder | Expected. Keep RLS on; do not add update/delete policies for sessions, and keep the `auth.uid()` folder check on `app-files` |
+| `Bucket not found` | The `app-files` bucket is missing or renamed | Create it under **Storage → Buckets**; do not change `STORAGE_BUCKET` unless you deliberately rename it |
+| `Payload too large` / maximum size exceeded | The image is over the frontend or bucket limit | Choose an image under 5 MB; raise both `MAX_IMAGE_BYTES` and the bucket limit if the product rule changes |
+| A profile photo uploads but the image is blank | The bucket is private and the signed URL or CSP is failing | Add the Storage `select` policy, and keep `img-src ... https://*.supabase.co` in the CSP |
 | `permission denied for table study_sessions` | Anonymous role or missing grant | Expected for `anon`; make sure the request is authenticated |
 | `function public.get_leaderboard(text) does not exist` | Schema not applied or stale PostgREST cache | Run `schema.sql`; `notify pgrst, 'reload schema';` |
 | `Your profile could not be found` | User predates the trigger or the trigger failed | Run the backfill query in the root README |
@@ -338,5 +429,5 @@ Then run `schema.sql` again. Existing auth users will not automatically get prof
 
 - `gen_random_uuid()` is provided by modern Postgres; no extension is required on Supabase.
 - The schema assumes the standard Supabase roles `anon`, `authenticated` and `service_role`.
-- Keep the `service_role` key out of the frontend and out of version control. It bypasses RLS.
+- Keep the `service_role` key out of the frontend and out of version control. It bypasses RLS and Storage policies.
 - Timing is client-reported. The schema validates limits and ownership but is not a full anti-cheat system. See the security notes in the root README.

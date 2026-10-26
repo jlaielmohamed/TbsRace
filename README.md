@@ -14,7 +14,7 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
 - **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
 - **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), Google sign-in, password reset and persistent sessions.
-- **Profile editing** where every signed-in student can update their display name, class year and daily goal.
+- **Profile editing** where every signed-in student can update their display name, class year, daily goal and profile picture. Pictures are stored in the private `app-files` bucket and displayed through short-lived signed URLs.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
 
 ---
@@ -51,6 +51,7 @@ tbsrace/
 ├── js/
 │   ├── config.js               # Supabase keys, timezone and product rules
 │   ├── supabaseClient.js       # pinned CDN client, one shared instance
+│   ├── storage.js              # private app-files paths, uploads, signed URLs, deletes
 │   ├── utils.js                # dates, durations, escaping, colours
 │   ├── ui.js                   # friendly errors, toasts, empty/error/loading states
 │   ├── nav.js                  # shared header, mobile nav, account menu
@@ -110,6 +111,7 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
    ```
    Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too. These URLs are used by password reset links and by the Google redirect.
 7. Password reset emails still need a working sender. Configure **custom SMTP** under **Authentication → SMTP Settings** for production; Supabase's built-in sender is rate-limited and not intended for a whole school.
+8. Create a **private** Storage bucket named **`app-files`** under **Storage → Buckets**. It is not created by `schema.sql`. Add object policies that restrict each signed-in user to the folder named after their user id; the reference SQL and path rules are in [`supabase/README.md`](supabase/README.md#storage). This project already uses that bucket, so do not create a second one.
 
 Detailed database notes and an RLS test script are in [`supabase/README.md`](supabase/README.md).
 
@@ -180,6 +182,7 @@ All product rules live in `js/config.js` and are mirrored in `supabase/schema.sq
 | --- | --- | --- | --- |
 | Supabase URL | `SUPABASE_URL` | — | your project URL |
 | Supabase public key | `SUPABASE_ANON_KEY` | — | your anon/publishable key |
+| Private file bucket | `STORAGE_BUCKET` in `js/storage.js` | `storage.objects` policies | `app-files` |
 | Email restriction | `ALLOWED_EMAIL_DOMAIN` | — | empty, so any valid email is accepted |
 | Study-day timezone | `TIMEZONE` | `public.app_timezone()` | `Europe/Paris` |
 | Default daily goal | `DAILY_GOAL_DEFAULT_MINUTES` | `public.daily_goal_default_minutes()` | `60` minutes |
@@ -219,6 +222,25 @@ Every “day”, “week” and “month” boundary is calculated in `Europe/Pa
 - The RPC returns the **top 10** plus the caller's own row. Rows contain only `rank`, display name, level, seconds and `is_you`. No ids, emails or other profile fields are returned.
 - The monthly “best rank” on the Stats page is the caller's best **daily** rank within the current month.
 
+### Profile pictures and the `app-files` bucket
+
+The profile picture is the app's file upload. `js/storage.js` is the single place that talks to Storage; reuse it for future upload features instead of adding bucket logic to pages.
+
+- **Bucket:** private `app-files`. Never make it public.
+- **Path rule:** every object starts with the signed-in user id:
+  ```text
+  <auth.uid()>/<featureName>/<itemId>/<uuid>.<extension>
+  <auth.uid()>/profile/<auth.uid()>/<uuid>.jpg
+  ```
+  `js/storage.js` builds this path, and a check constraint on `public.profiles.avatar_path` rejects anything that does not match the user's own `/profile/` folder.
+- **Accepted pictures:** JPG, PNG or WebP, up to 5 MB. The browser validates type and size before uploading; the bucket's own file-size limit is the final backstop.
+- **Save:** choose a photo → local preview → **Save changes**. The page uploads the object, writes the returned path to `public.profiles.avatar_path`, then deletes the previous object if there was one.
+- **Display:** the bucket is private, so the profile page and header request signed URLs. They are cached for the page and expire after one hour.
+- **Remove:** **Remove photo** clears `avatar_path` and deletes the object. If the database update fails, the stored object is left untouched. If the object delete fails after the row is cleared, the profile stays clean and no broken image is shown.
+- **Failure cleanup:** if a new upload succeeds but the profile update fails, the page deletes the new object so no unreferenced file is left behind.
+
+Bucket policies are the security boundary, not the path builder. See [`supabase/README.md`](supabase/README.md#storage) for the four object policies and a verification query. The deployed CSP must allow images from your Supabase project (`img-src 'self' data: blob: https://*.supabase.co`); `render.yaml` already does.
+
 ---
 
 ## Deploy to Render
@@ -254,6 +276,7 @@ No SPA rewrite is required. Every internal link includes `.html`, and Render ser
 - [ ] Sign up with a real email address (Gmail works) and land on the timer immediately.
 - [ ] Sign in, save a session, reload the timer and verify it restores.
 - [ ] Sign out and confirm private pages redirect to sign in.
+- [ ] Upload a profile picture, reload the page and remove it again.
 - [ ] Run the two-account RLS test below.
 - [ ] Check the browser console and network tab for CSP or 404 errors.
 
@@ -334,6 +357,7 @@ One row per auth user, created automatically by an `after insert` trigger on `au
 | `full_name` | 1-80 characters after trimming |
 | `class_year` | `Freshman`, `Sophomore`, `Junior` or `Senior` |
 | `daily_goal_minutes` | 30-720, default 60 |
+| `avatar_path` | optional private `app-files` object path, `<id>/profile/<id>/<uuid>.<ext>`; checked by a constraint |
 | `created_at`, `updated_at` | timestamps; `updated_at` is maintained by trigger |
 
 ### `public.study_sessions`
@@ -384,6 +408,8 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] Site URL is the production origin.
 - [ ] All local and production redirect URLs are allow-listed.
 - [ ] Custom SMTP is configured for real users.
+- [ ] The `app-files` bucket exists and is **private**.
+- [ ] Storage object policies limit each user to the folder named after their user id.
 - [ ] RLS is enabled on both tables and the two-account test passes.
 - [ ] The anonymous role cannot read tables or call the RPCs.
 - [ ] Leaderboard JSON contains no ids or emails.
@@ -393,7 +419,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 
 - [ ] Static site publishes the repository root, with no build command.
 - [ ] Security headers from `render.yaml` are active.
-- [ ] The CSP allows your Supabase project, jsDelivr and Google Fonts.
+- [ ] The CSP allows your Supabase project (including Storage images), jsDelivr and Google Fonts.
 - [ ] HTTPS works and the custom domain (if any) is verified.
 - [ ] Supabase URLs were updated after the final domain was known.
 - [ ] A password reset email returns to the deployed site.
@@ -409,6 +435,9 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] The plan-end alert is visible and audible (after the first user interaction unlocks audio).
 - [ ] Calendar month/day views, timeline, Levels, Stats and all three leaderboard periods render.
 - [ ] Editing the profile saves the name, class year and daily goal, updates the header immediately and persists after a reload.
+- [ ] Choosing a JPG, PNG or WebP profile picture uploads it, shows it in the header and preview, and persists after a reload.
+- [ ] Removing the profile picture clears the database path and deletes the stored object; initials return.
+- [ ] Non-image and over-5 MB files show a clear error instead of uploading.
 - [ ] Empty, loading and error states are reachable and understandable.
 - [ ] No console errors, broken imports or 404s.
 - [ ] No horizontal page scroll at 360, 768, 1024 and 1440 px.
@@ -454,6 +483,15 @@ on conflict (id) do nothing;
 **The leaderboard RPC is missing or returns 404.**
 The schema was not run, or PostgREST has a stale schema cache. Run `notify pgrst, 'reload schema';` in the SQL Editor and reload the page.
 
+**A profile picture will not upload.**
+Check that the private `app-files` bucket exists and that its object policies allow the signed-in user to write under their own id folder. Rerun `supabase/schema.sql` to add `profiles.avatar_path` and its grants; if the API reports a missing column, run `notify pgrst, 'reload schema';`. Non-image files and images over 5 MB are rejected before any request is made.
+
+**A profile picture uploads but the image is blank.**
+The bucket is private, so the app needs a signed URL. Make sure the Storage `select` policy allows the owner, and that the CSP allows images from your project: `img-src 'self' data: blob: https://*.supabase.co` (already set in `render.yaml`). If you changed the CSP in the Render dashboard, update it there too.
+
+**Removing a photo says the old file could not be deleted.**
+The profile row is already clean, so no broken image is shown, but the object remains in `app-files`. Add the Storage `delete` policy for the owner and remove the photo again; or delete the leftover object in **Storage → app-files**.
+
 **The timer resets when I close the browser.**
 Timer state is stored in `localStorage` per browser and device. Signing out clears it deliberately. Private browsing may also clear it.
 
@@ -477,7 +515,9 @@ The database requires `duration_seconds` to fit inside `end_time - start_time` (
 - **Sessions are immutable** from the client: no update or delete policy exists.
 - **Time is client-reported.** A determined student could insert a fabricated but internally consistent session for their own account. The schema validates shape and limits but cannot prove real-world focus. If cheating becomes a concern, add server-side session start/stop tokens or a moderation workflow.
 - **No realtime subscription** for the leaderboard; it refreshes every 60 seconds and when the tab becomes visible.
-- **Profile editing is scoped**: a student can update only their own row through RLS, and column grants limit writes to `full_name`, `class_year` and `daily_goal_minutes`. The email is read from Supabase Auth and is read-only in the UI.
+- **Profile editing is scoped**: a student can update only their own row through RLS, and column grants limit writes to `full_name`, `class_year`, `daily_goal_minutes` and `avatar_path`. The email is read from Supabase Auth and is read-only in the UI.
+- **Uploaded files are private**: the `app-files` bucket is not public. Every path starts with `auth.uid()`, Storage policies enforce that prefix and the profile check constraint enforces the expected avatar path. Images are shown only through signed URLs that expire after an hour.
+- **Upload validation is client-side first**: the browser checks MIME type and the 5 MB limit, but the bucket policy and its configured file-size limit are the real boundary. Keep both in place.
 - **Static hosting** means there is no server-side rendering and no secrets in the frontend. That is intentional.
 
 ---

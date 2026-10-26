@@ -62,6 +62,34 @@ export function friendlyError(error, fallback = 'Something went wrong. Please tr
   const code = String(error?.code ?? '').toLowerCase();
   const message = String(error?.message ?? '').toLowerCase();
 
+  if (code === 'storage_invalid_type') {
+    return 'Choose a JPG, PNG or WebP image.';
+  }
+  if (code === 'storage_too_large') {
+    return 'That image is larger than 5 MB. Choose a smaller photo.';
+  }
+  if (code === 'storage_unavailable') {
+    return 'Photo storage is not available right now. Please try again later.';
+  }
+  if (code === 'storage_foreign_path') {
+    return 'That photo does not belong to this account.';
+  }
+  if (code === 'storage_signed_url') {
+    return 'We could not open that photo. Please refresh and try again.';
+  }
+  if (message.includes('bucket not found')) {
+    return 'Photo storage is not set up yet. Ask an admin to check the app-files bucket.';
+  }
+  if (
+    message.includes('payload too large') ||
+    message.includes('maximum allowed size') ||
+    message.includes('exceeded the maximum')
+  ) {
+    return 'That image is larger than 5 MB. Choose a smaller photo.';
+  }
+  if (message.includes('mime type') || message.includes('invalid content type')) {
+    return 'Choose a JPG, PNG or WebP image.';
+  }
   if (code === 'profile_missing' || code === 'p0002') {
     return 'Your student profile is missing. Run the database setup in README.md, then sign in again.';
   }
@@ -103,6 +131,9 @@ export function friendlyError(error, fallback = 'Something went wrong. Please tr
   }
   if (message.includes('jwt') || code === 'pgrst301' || message.includes('session')) {
     return 'Your session has expired. Please sign in again.';
+  }
+  if (message.includes('row-level security')) {
+    return 'You can only change your own data. Sign in again and try once more.';
   }
   if (message.includes('database error')) {
     return 'We could not save that right now. Please try again.';

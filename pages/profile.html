@@ -46,6 +46,27 @@
           </div>
 
           <form id="profile-form" class="profile-form" novalidate>
+            <div class="avatar-editor" role="group" aria-labelledby="profile-avatar-label">
+              <span class="preview-avatar avatar-editor-image" aria-hidden="true">
+                <img id="profile-avatar-photo" class="avatar-photo" alt="" hidden>
+                <span id="profile-avatar-initials">?</span>
+              </span>
+              <div class="avatar-editor-copy">
+                <span id="profile-avatar-label" class="field-label">Profile picture</span>
+                <p id="profile-avatar-hint" class="field-hint">JPG, PNG or WebP, up to 5 MB. It appears in the header after you save.</p>
+                <p id="profile-avatar-error" class="field-error" hidden></p>
+                <div class="avatar-editor-actions">
+                  <label class="btn btn-outline btn-small avatar-upload-button">
+                    Choose photo
+                    <input id="profile-avatar-input" class="visually-hidden" type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      aria-describedby="profile-avatar-hint profile-avatar-error">
+                  </label>
+                  <button id="profile-avatar-remove" class="btn btn-outline btn-small" type="button" hidden>Remove photo</button>
+                </div>
+              </div>
+            </div>
+
             <div class="field">
               <label class="field-label" for="profile-name">Display name</label>
               <input id="profile-name" name="full_name" type="text" maxlength="80" autocomplete="name"
@@ -121,7 +142,10 @@
             <p class="eyebrow">How you appear</p>
             <h2 id="profile-preview-title">Leaderboard preview</h2>
             <div class="preview-identity">
-              <span id="profile-preview-avatar" class="preview-avatar" aria-hidden="true">?</span>
+              <span id="profile-preview-avatar" class="preview-avatar" aria-hidden="true">
+                <img id="profile-preview-photo" class="avatar-photo" alt="" hidden>
+                <span id="profile-preview-initials">?</span>
+              </span>
               <div class="preview-copy">
                 <strong id="profile-preview-name" class="preview-name">Student</strong>
                 <span id="profile-preview-class" class="preview-class">Freshman</span>

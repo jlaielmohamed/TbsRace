@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient.js';
 import { clearProfileCache, getProfile } from './profile.js';
+import { getSignedFileUrl } from './storage.js';
 import { initials } from './utils.js';
 import { friendlyError, setButtonBusy, showToast } from './ui.js';
 import { TIMER_STORAGE_PREFIX } from './config.js';
@@ -58,7 +59,7 @@ function appHeaderMarkup() {
 
           <div class="user-menu">
             <button class="avatar-button" type="button" aria-haspopup="menu" aria-expanded="false"
-              aria-label="Open account menu"><span class="avatar-initials">?</span></button>
+              aria-label="Open account menu"><img class="avatar-photo" alt="" hidden><span class="avatar-initials">?</span></button>
             <div class="user-dropdown" role="menu" hidden>
               <div class="user-dropdown-head">
                 <span class="user-dropdown-name">Student</span>
@@ -155,6 +156,33 @@ function setUpUserMenu(header, closeNav) {
   return { close };
 }
 
+function updateHeaderAvatar(header, path) {
+  const button = header.querySelector('.avatar-button');
+  const photo = button?.querySelector('.avatar-photo');
+  if (!button || !photo) return;
+
+  const wanted = path || '';
+  button.dataset.avatarPath = wanted;
+
+  if (!wanted) {
+    photo.hidden = true;
+    photo.removeAttribute('src');
+    return;
+  }
+
+  getSignedFileUrl(wanted)
+    .then((url) => {
+      if (!url || button.dataset.avatarPath !== wanted) return;
+      photo.src = url;
+      photo.hidden = false;
+    })
+    .catch(() => {
+      if (button.dataset.avatarPath !== wanted) return;
+      photo.hidden = true;
+      photo.removeAttribute('src');
+    });
+}
+
 function updateIdentity(header, profile, metadataName = '') {
   const name = profile?.full_name || metadataName || 'Student';
   const classYear = profile?.class_year || 'TBS';
@@ -167,6 +195,8 @@ function updateIdentity(header, profile, metadataName = '') {
   if (nameElement) nameElement.textContent = name;
   if (classElement) classElement.textContent = classYear;
   if (button) button.setAttribute('aria-label', `Open account menu for ${name}`);
+
+  updateHeaderAvatar(header, profile?.avatar_path ?? null);
 }
 
 /** Refresh the avatar, name and class after a profile update. */

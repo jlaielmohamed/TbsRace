@@ -6,11 +6,16 @@
 --
 --  It creates:
 --    * public.profiles and public.study_sessions
+--    * a private profile-picture path column backed by the `app-files` bucket
 --    * Row Level Security policies (students can only read/write their own data)
 --    * a trigger that creates a profile for every new auth user
 --    * public.get_my_progress()      -> level, streak, bonus and total time
 --    * public.get_leaderboard(text)  -> safe top 10 + the caller's own row
 --    * public.get_my_best_rank_this_month()
+--
+--  The Storage bucket itself and its object policies are configured in the
+--  Supabase dashboard; see supabase/README.md. Every object path must start
+--  with the signed-in user id.
 --
 --  Any valid email address may sign up (a normal Gmail account is fine); there
 --  is no email-domain restriction and no confirmation step.
@@ -94,6 +99,34 @@ create table if not exists public.profiles (
 -- function call, so re-running this file updates new profiles too.
 alter table public.profiles
   alter column daily_goal_minutes set default public.daily_goal_default_minutes();
+
+-- Profile pictures live in the private `app-files` Storage bucket. The column
+-- stores the object path, never a public URL; the app resolves it with a signed
+-- URL when a picture is displayed.
+alter table public.profiles
+  add column if not exists avatar_path text;
+
+alter table public.profiles
+  drop constraint if exists profiles_avatar_path_format;
+
+alter table public.profiles
+  add constraint profiles_avatar_path_format check (
+    avatar_path is null
+    or (
+      char_length(avatar_path) between 1 and 200
+      and avatar_path like (id::text || '/profile/' || id::text || '/%')
+      and avatar_path ~* (
+        '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        || '/profile/'
+        || '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        || '/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+        || '\.(jpg|jpeg|png|webp)$'
+      )
+    )
+  );
+
+comment on column public.profiles.avatar_path is
+  'Private app-files object path: <user id>/profile/<user id>/<uuid>.<jpg|png|webp>. Read with a signed URL.';
 
 comment on table public.profiles is
   'Public identity used by the leaderboard. One row per auth user, created by trigger.';
@@ -254,9 +287,10 @@ create policy "Sessions: insert own"
 -- profile ids/created_at or writing sessions for somebody else.
 
 revoke all on table public.profiles from public, anon, authenticated;
-grant select (id, full_name, class_year, daily_goal_minutes, created_at, updated_at)
+grant select (id, full_name, class_year, daily_goal_minutes, avatar_path,
+              created_at, updated_at)
   on table public.profiles to authenticated;
-grant update (full_name, class_year, daily_goal_minutes)
+grant update (full_name, class_year, daily_goal_minutes, avatar_path)
   on table public.profiles to authenticated;
 
 revoke all on table public.study_sessions from public, anon, authenticated;
