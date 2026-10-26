@@ -112,13 +112,15 @@ In the Supabase dashboard:
    http://localhost:8080/**
    https://YOUR-APP.onrender.com/**
    ```
-6. **SMTP**: configure a real provider before inviting students. The built-in sender is rate-limited. It is still needed for password reset emails.
+6. **Google** (optional): enable the provider under **Sign In / Providers → Google** with a Google Cloud OAuth client whose authorized redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
+7. **SMTP**: configure a real provider before inviting students. The built-in sender is rate-limited. It is still needed for password reset emails.
 
-The frontend requests this return path:
+The frontend requests these return paths:
 
 - Password reset → `pages/reset-password.html`
+- Google OAuth → `pages/timer.html` (session is read from the URL by `detectSessionInUrl`)
 
-Make sure it is covered by the redirect allow list for every origin you use.
+Make sure both are covered by the redirect allow list for every origin you use.
 
 ---
 

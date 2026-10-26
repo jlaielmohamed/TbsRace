@@ -2,7 +2,7 @@ import './nav.js';
 import {
   ALLOWED_EMAIL_DOMAIN
 } from './config.js';
-import { isSupabaseConfigured, supabase } from './supabaseClient.js';
+import { isSupabaseConfigured, signInWithGoogle, supabase } from './supabaseClient.js';
 import { redirectIfSignedIn } from './guard.js';
 import {
   isAllowedEmail,
@@ -43,6 +43,41 @@ function configurePasswordToggles(scope = document) {
 function clearMessageOnInput(form, messageElement) {
   if (!form) return;
   form.addEventListener('input', () => setFormMessage(messageElement, ''));
+}
+
+/**
+ * "Continue with Google" buttons on the auth pages. The markup ships hidden so
+ * an unconfigured build never shows a dead button; it is revealed only once we
+ * know Supabase is set up.
+ */
+function initGoogleSignIn() {
+  const buttons = document.querySelectorAll('[data-google-signin]');
+  if (!buttons.length || !isSupabaseConfigured) return;
+
+  const message = document.getElementById('form-message');
+  let busy = false;
+
+  buttons.forEach((button) => {
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      if (busy) return;
+      busy = true;
+      setFormMessage(message, '');
+      setButtonBusy(button, true, 'Opening Google…');
+
+      try {
+        // Redirects to Google, then back to the timer with a session.
+        await signInWithGoogle(absolutePage('timer.html'));
+      } catch (error) {
+        setFormMessage(
+          message,
+          friendlyError(error, 'We could not open Google sign-in. Please try again.')
+        );
+        busy = false;
+        setButtonBusy(button, false);
+      }
+    });
+  });
 }
 
 function validateEmailField(input, errorElement) {
@@ -399,6 +434,7 @@ async function initResetPassword() {
 
 async function initAuthPage() {
   configurePasswordToggles();
+  initGoogleSignIn();
 
   switch (authPage) {
     case 'signin':

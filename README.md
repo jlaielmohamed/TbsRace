@@ -13,7 +13,7 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Levels** 1-6 (Rookie to Legend) with capped bonus progress, streak and goal-day stats.
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
 - **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
-- **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), sign-in, password reset and persistent sessions.
+- **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), Google sign-in, password reset and persistent sessions.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
 
 ---
@@ -99,15 +99,34 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
    - turn **Confirm email** **off** (this app signs students in immediately after sign-up; the toggle lives on the provider page, not under a separate Settings menu),
    - set **Minimum password length** to `8`.
 5. Set **Site URL** to your production origin (for example `https://YOUR-APP.onrender.com`) under **Authentication → URL Configuration**.
-5. Under **Authentication → URL Configuration → Redirect URLs**, add every URL the app can return to:
+6. Under **Authentication → URL Configuration → Redirect URLs**, add every URL the app can return to:
    ```text
    http://localhost:8080/**
    https://YOUR-APP.onrender.com/**
    ```
-   Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too. These URLs are used by password reset links.
-6. Password reset emails still need a working sender. Configure **custom SMTP** under **Authentication → SMTP Settings** for production; Supabase's built-in sender is rate-limited and not intended for a whole school.
+   Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too. These URLs are used by password reset links and by the Google redirect.
+7. Password reset emails still need a working sender. Configure **custom SMTP** under **Authentication → SMTP Settings** for production; Supabase's built-in sender is rate-limited and not intended for a whole school.
 
 Detailed database notes and an RLS test script are in [`supabase/README.md`](supabase/README.md).
+
+### 2b. Google sign-in (optional)
+
+The **Continue with Google** buttons on the sign-in and sign-up pages call `signInWithGoogle()` in `js/supabaseClient.js`, which starts Supabase OAuth. Without the setup below the buttons stay hidden, so email/password keeps working on its own.
+
+1. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen (scopes `email` and `profile`), then **Create credentials → OAuth client ID → Web application**.
+2. Add the origins you serve the app from:
+   ```text
+   http://localhost:8080
+   https://YOUR-APP.onrender.com
+   ```
+3. Add exactly one authorized redirect URI — the Supabase callback, **not** your own page:
+   ```text
+   https://YOUR-PROJECT.supabase.co/auth/v1/callback
+   ```
+4. Copy the **Client ID** and **Client secret** into Supabase under **Authentication → Sign In / Providers → Google**, enable the provider and save.
+5. Make sure your origin and `/pages/timer.html` are covered by **Authentication → URL Configuration → Redirect URLs** (the `/**` entries above already are).
+
+Flow: button → `signInWithOAuth` → Google → Supabase callback → `pages/timer.html`, where `detectSessionInUrl` turns the returned tokens into a session. If Google returns `redirect_uri_mismatch`, the URI in step 3 is wrong; if Supabase returns "requested path is invalid", the Redirect URLs allow list is missing your origin.
 
 ### 3. Configure the frontend
 
@@ -355,6 +374,8 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 
 - [ ] `supabase/schema.sql` ran without errors.
 - [ ] Email provider is enabled and **Confirm email** is **off**.
+- [ ] Google provider is enabled with a Google Cloud OAuth client (only if you want the Google button).
+- [ ] The Google authorized redirect URI is `https://<project-ref>.supabase.co/auth/v1/callback`.
 - [ ] Minimum password length is 8.
 - [ ] Site URL is the production origin.
 - [ ] All local and production redirect URLs are allow-listed.
@@ -376,6 +397,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 ### Product checks
 
 - [ ] Sign-up rejects a malformed email address in the UI and accepts a normal Gmail address.
+- [ ] **Continue with Google** sends you to Google and returns to the timer signed in.
 - [ ] Signing up lands directly on the timer with no email confirmation step.
 - [ ] Sign-in, sign-out, forgot password and reset password all work.
 - [ ] A refresh during a running timer restores the session and keeps counting.
@@ -397,6 +419,9 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 
 **Sign-up returns “Database error saving new user”.**
 The schema or its trigger is missing, or an older database still runs the removed TBS-domain trigger. Run `supabase/schema.sql` again (it drops that trigger) and check **Logs → Auth** / Postgres logs.
+
+**“Continue with Google” is missing or does nothing.**
+The button stays hidden until Supabase is configured, and it needs the Google provider. Enable it under **Authentication → Sign In / Providers → Google**, and set the Google Cloud authorized redirect URI to `https://YOUR-PROJECT.supabase.co/auth/v1/callback` (not your own page). See the Google sign-in section above.
 
 **Reset emails point to localhost.**
 Supabase uses the **Site URL** and **Redirect URLs** settings, not the frontend config. Set the production origin and add the deployed `reset-password.html` URL.
