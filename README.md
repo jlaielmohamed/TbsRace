@@ -94,11 +94,11 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
 
 1. Create a Supabase project and wait for the database to be ready.
 2. Open **SQL Editor**, paste all of `supabase/schema.sql`, and run it. It is safe to run again.
-3. Go to **Authentication → Providers → Email** and make sure Email is enabled.
-4. Go to **Authentication → Settings** and:
-   - turn **Confirm email** **off** (this app signs students in immediately after sign-up),
-   - set **Minimum password length** to `8`,
-   - set **Site URL** to your production origin (for example `https://YOUR-APP.onrender.com`).
+3. Go to **Authentication → Sign In / Providers → Email** and make sure the Email provider is enabled.
+4. On the same Email provider page, in the provider-specific settings:
+   - turn **Confirm email** **off** (this app signs students in immediately after sign-up; the toggle lives on the provider page, not under a separate Settings menu),
+   - set **Minimum password length** to `8`.
+5. Set **Site URL** to your production origin (for example `https://YOUR-APP.onrender.com`) under **Authentication → URL Configuration**.
 5. Under **Authentication → URL Configuration → Redirect URLs**, add every URL the app can return to:
    ```text
    http://localhost:8080/**
@@ -402,7 +402,7 @@ The schema or its trigger is missing, or an older database still runs the remove
 Supabase uses the **Site URL** and **Redirect URLs** settings, not the frontend config. Set the production origin and add the deployed `reset-password.html` URL.
 
 **Sign-up succeeds but the student is not signed in.**
-Supabase still has **Confirm email** enabled. Turn it off in **Authentication → Settings**; the app creates the account and expects an immediate session.
+Supabase still has **Confirm email** enabled. Turn it off under **Authentication → Sign In / Providers → Email**; the app creates the account and expects an immediate session.
 
 **“Your profile could not be found.”**
 The `on_auth_user_created` trigger was added after the user was created. Backfill missing profiles:

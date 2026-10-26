@@ -103,8 +103,8 @@ RLS is the security boundary. The frontend guard only decides where to send a si
 
 In the Supabase dashboard:
 
-1. **Authentication → Providers → Email**: enabled.
-2. **Authentication → Settings → Confirm email**: **disabled**. Sign-up must return a session immediately; the app redirects straight to the timer and no longer waits for a confirmation link.
+1. **Authentication → Sign In / Providers → Email**: enabled.
+2. **Confirm email** (on that same Email provider page, under the provider-specific settings): **disabled**. Sign-up must return a session immediately; the app redirects straight to the timer and no longer waits for a confirmation link.
 3. **Minimum password length**: 8.
 4. **Authentication → URL Configuration → Site URL**: your deployed origin.
 5. **Redirect URLs**: every origin/path that can receive an email link, including:
