@@ -12,7 +12,8 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Calendar** with month and day views, a live day timeline, daily totals, goal progress and session details.
 - **Levels** 1-6 (Rookie to Legend) with capped bonus progress, streak and goal-day stats.
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
-- **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
+- **Leaderboard** for today, this month and all time, with a safe top 10, student avatars and a clickable public profile for every ranked student.
+- **Public student profiles** showing each student's profile picture, full name, class year, level, today's study time and all-time study time. Private data such as email and daily goal is never exposed.
 - **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), Google sign-in, password reset and persistent sessions.
 - **Profile editing** where every signed-in student can update their display name, class year, daily goal and profile picture. Pictures are stored in the private `app-files` bucket and displayed through short-lived signed URLs.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
@@ -34,6 +35,7 @@ tbsrace/
 │   ├── levels.html
 │   ├── stats.html
 │   ├── profile.html
+│   ├── student.html
 │   └── leaderboard.html
 ├── css/
 │   ├── base.css                # tokens, reset, typography, accessibility
@@ -47,6 +49,7 @@ tbsrace/
 │       ├── levels.css
 │       ├── stats.css
 │       ├── profile.css
+│       ├── student.css
 │       └── leaderboard.css
 ├── js/
 │   ├── config.js               # Supabase keys, timezone and product rules
@@ -57,6 +60,7 @@ tbsrace/
 │   ├── nav.js                  # shared header, mobile nav, account menu
 │   ├── guard.js                # private-page guard and auth redirects
 │   ├── profile.js
+│   ├── studentProfile.js
 │   ├── progress.js
 │   ├── sessions.js
 │   ├── leaderboardData.js
@@ -69,6 +73,7 @@ tbsrace/
 │   ├── levels.js
 │   ├── stats.js
 │   ├── profileEdit.js
+│   ├── student.js
 │   └── leaderboard.js
 ├── assets/
 │   ├── favicon.svg
@@ -111,7 +116,7 @@ The original `TbsRace - Study Leaderboard Design.pdf` is kept at the project roo
    ```
    Replace the production origin with your real Render URL or custom domain. If you use a different local port, change it here too. These URLs are used by password reset links and by the Google redirect.
 7. Password reset emails still need a working sender. Configure **custom SMTP** under **Authentication → SMTP Settings** for production; Supabase's built-in sender is rate-limited and not intended for a whole school.
-8. Create a **private** Storage bucket named **`app-files`** under **Storage → Buckets**. It is not created by `schema.sql`. Add object policies that restrict each signed-in user to the folder named after their user id; the reference SQL and path rules are in [`supabase/README.md`](supabase/README.md#storage). This project already uses that bucket, so do not create a second one.
+8. Create a **private** Storage bucket named **`app-files`** under **Storage → Buckets**. It is not created by `schema.sql`. Add object policies that restrict each signed-in user to the folder named after their user id, plus a read policy for `/profile/` pictures so students can see each other's avatars; the reference SQL and path rules are in [`supabase/README.md`](supabase/README.md#storage). This project already uses that bucket, so do not create a second one.
 
 Detailed database notes and an RLS test script are in [`supabase/README.md`](supabase/README.md).
 
@@ -219,7 +224,8 @@ Every “day”, “week” and “month” boundary is calculated in `Europe/Pa
 - Periods: `today`, `month`, `all` in `Europe/Paris`.
 - Only students with at least one session in the period are ranked.
 - Ranking: total seconds descending, then the earliest `max(end_time)` (the student who finished their latest session first), then `user_id` as a deterministic final tie-break.
-- The RPC returns the **top 10** plus the caller's own row. Rows contain only `rank`, display name, level, seconds and `is_you`. No ids, emails or other profile fields are returned.
+- The RPC returns the **top 10** plus the caller's own row. Rows contain `rank`, the public profile id, display name, level, seconds, avatar path and `is_you`. They never include emails, daily goals or session rows.
+- Selecting a row opens `pages/student.html?id=<profile_id>`. That page calls `get_public_profile` for the picture, full name, class year, level, today's study time and all-time study time.
 - The monthly “best rank” on the Stats page is the caller's best **daily** rank within the current month.
 
 ### Profile pictures and the `app-files` bucket
@@ -235,7 +241,8 @@ The profile picture is the app's file upload. `js/storage.js` is the single plac
   `js/storage.js` builds this path, and a check constraint on `public.profiles.avatar_path` rejects anything that does not match the user's own `/profile/` folder.
 - **Accepted pictures:** JPG, PNG or WebP, up to 5 MB. The browser validates type and size before uploading; the bucket's own file-size limit is the final backstop.
 - **Save:** choose a photo → local preview → **Save changes**. The page uploads the object, writes the returned path to `public.profiles.avatar_path`, then deletes the previous object if there was one.
-- **Display:** the bucket is private, so the profile page and header request signed URLs. They are cached for the page and expire after one hour.
+- **Display:** the bucket is private, so the profile page, header, leaderboard and public student profiles request signed URLs. They are cached for the page and expire after one hour.
+- **Visible to other students:** profile pictures are the one deliberately shared private file. An extra Storage `select` policy lets any signed-in student read objects whose second folder is `profile` (the `<id>/profile/<id>/<uuid>.<ext>` shape). Without that policy, other students' signed URLs fail and the leaderboard falls back to initials.
 - **Remove:** **Remove photo** clears `avatar_path` and deletes the object. If the database update fails, the stored object is left untouched. If the object delete fails after the row is cleared, the profile stays clean and no broken image is shown.
 - **Failure cleanup:** if a new upload succeeds but the profile update fails, the page deletes the new object so no unreferenced file is left behind.
 
@@ -380,6 +387,7 @@ Immutable session history. Students can select and insert their own rows; there 
 | --- | --- | --- |
 | `get_my_progress()` | JSON progress object | `authenticated` only |
 | `get_leaderboard(p_period text)` | JSON with `period`, `rows`, `you`, `total_students`, `generated_at` | `authenticated` only |
+| `get_public_profile(p_user_id uuid)` | public identity and study totals for one student, or `null` | `authenticated` only |
 | `get_my_best_rank_this_month()` | integer or null | `authenticated` only |
 | `calculate_study_progress(uuid)` | internal JSON helper | not executable by API roles |
 
@@ -409,10 +417,10 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] All local and production redirect URLs are allow-listed.
 - [ ] Custom SMTP is configured for real users.
 - [ ] The `app-files` bucket exists and is **private**.
-- [ ] Storage object policies limit each user to the folder named after their user id.
+- [ ] Storage object policies limit each user to their own folder and allow every signed-in student to read `/profile/` pictures.
 - [ ] RLS is enabled on both tables and the two-account test passes.
 - [ ] The anonymous role cannot read tables or call the RPCs.
-- [ ] Leaderboard JSON contains no ids or emails.
+- [ ] Leaderboard JSON contains no emails or private profile fields, and `get_public_profile` omits the daily goal.
 - [ ] Test accounts and their sessions have been removed.
 
 ### Render
@@ -436,7 +444,8 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] Calendar month/day views, timeline, Levels, Stats and all three leaderboard periods render.
 - [ ] Editing the profile saves the name, class year and daily goal, updates the header immediately and persists after a reload.
 - [ ] Choosing a JPG, PNG or WebP profile picture uploads it, shows it in the header and preview, and persists after a reload.
-- [ ] Removing the profile picture clears the database path and deletes the stored object; initials return.
+- [ ] On the leaderboard, another student's profile picture appears and the row opens their public profile with name, class, level, today's time and all-time time.
+- [ ] Removing the profile picture clears the database path and deletes the stored object; initials return on the profile and leaderboard.
 - [ ] Non-image and over-5 MB files show a clear error instead of uploading.
 - [ ] Empty, loading and error states are reachable and understandable.
 - [ ] No console errors, broken imports or 404s.
@@ -480,14 +489,17 @@ from auth.users u
 on conflict (id) do nothing;
 ```
 
-**The leaderboard RPC is missing or returns 404.**
-The schema was not run, or PostgREST has a stale schema cache. Run `notify pgrst, 'reload schema';` in the SQL Editor and reload the page.
+**The leaderboard or student-profile RPC is missing or returns 404.**
+The schema was not run, or PostgREST has a stale schema cache. Run the latest `supabase/schema.sql`, then `notify pgrst, 'reload schema';` in the SQL Editor and reload the page.
 
 **A profile picture will not upload.**
 Check that the private `app-files` bucket exists and that its object policies allow the signed-in user to write under their own id folder. Rerun `supabase/schema.sql` to add `profiles.avatar_path` and its grants; if the API reports a missing column, run `notify pgrst, 'reload schema';`. Non-image files and images over 5 MB are rejected before any request is made.
 
 **A profile picture uploads but the image is blank.**
 The bucket is private, so the app needs a signed URL. Make sure the Storage `select` policy allows the owner, and that the CSP allows images from your project: `img-src 'self' data: blob: https://*.supabase.co` (already set in `render.yaml`). If you changed the CSP in the Render dashboard, update it there too.
+
+**Avatars show for you but not for other students.**
+The owner-only Storage `select` policy is not enough. Add the `TbsRace: read student profile pictures` policy from [`supabase/README.md`](supabase/README.md#storage), which allows signed-in students to read `app-files` objects whose second folder is `profile`. Then rerun `supabase/schema.sql` so the leaderboard includes `profile_id` and `avatar_path`.
 
 **Removing a photo says the old file could not be deleted.**
 The profile row is already clean, so no broken image is shown, but the object remains in `app-files`. Add the Storage `delete` policy for the owner and remove the photo again; or delete the leftover object in **Storage → app-files**.
@@ -510,13 +522,14 @@ The database requires `duration_seconds` to fit inside `end_time - start_time` (
 
 - **RLS is enabled** on `profiles` and `study_sessions`. Students can read and write only their own rows. Column grants also prevent changing ids, timestamps or other students' data.
 - **Sign-up is open to any valid email address**, so there is no server-side domain check. RLS still keeps every student's data separate; use Supabase's Auth settings (rate limits, CAPTCHA) if you open the site to the public.
-- **Leaderboard data is minimized** and computed by a `security definer` RPC. The client never receives another student's id or email.
+- **Leaderboard and profile data are minimized** and computed by `security definer` RPCs. The client receives the public profile id and avatar path needed for profile links, but never another student's email, daily goal or session rows.
+- **Public profiles are signed-in only.** `get_public_profile(uuid)` returns `null` for an unknown id and exposes only name, class year, level, today/all-time study time and avatar path.
 - **Internal progress helper is not callable** by `anon` or `authenticated`.
 - **Sessions are immutable** from the client: no update or delete policy exists.
 - **Time is client-reported.** A determined student could insert a fabricated but internally consistent session for their own account. The schema validates shape and limits but cannot prove real-world focus. If cheating becomes a concern, add server-side session start/stop tokens or a moderation workflow.
 - **No realtime subscription** for the leaderboard; it refreshes every 60 seconds and when the tab becomes visible.
 - **Profile editing is scoped**: a student can update only their own row through RLS, and column grants limit writes to `full_name`, `class_year`, `daily_goal_minutes` and `avatar_path`. The email is read from Supabase Auth and is read-only in the UI.
-- **Uploaded files are private**: the `app-files` bucket is not public. Every path starts with `auth.uid()`, Storage policies enforce that prefix and the profile check constraint enforces the expected avatar path. Images are shown only through signed URLs that expire after an hour.
+- **Uploaded files are private**: the `app-files` bucket is not public. Every path starts with `auth.uid()`, Storage policies enforce that prefix, and the profile check constraint enforces the expected avatar path. Profile pictures are readable by every signed-in student so they can appear on the leaderboard; all other files stay owner-only. Images are shown through signed URLs that expire after an hour.
 - **Upload validation is client-side first**: the browser checks MIME type and the 5 MB limit, but the bucket policy and its configured file-size limit are the real boundary. Keep both in place.
 - **Static hosting** means there is no server-side rendering and no secrets in the frontend. That is intentional.
 

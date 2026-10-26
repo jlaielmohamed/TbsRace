@@ -9,13 +9,16 @@ function normalizeRow(row) {
     name: String(row.name ?? 'Student'),
     level: toNumber(row.level, 1),
     seconds: toNumber(row.seconds),
-    isYou: Boolean(row.is_you)
+    isYou: Boolean(row.is_you),
+    profileId: row.profile_id ? String(row.profile_id) : null,
+    avatarPath: row.avatar_path ? String(row.avatar_path) : null
   };
 }
 
 /**
- * Safe leaderboard data from the database function. It never returns another
- * student's id or email, only rank, display name, level and studied seconds.
+ * Safe leaderboard data from the database function. It never returns an email
+ * or private account data. `profile_id` and `avatar_path` are the public
+ * identity fields needed to open a student profile and show its picture.
  */
 export async function getLeaderboard(period = 'today') {
   if (!supabase) throw new Error('Supabase is not configured.');

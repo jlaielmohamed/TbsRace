@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="See a TbsRace student's class year, level, today's study time and all-time study time.">
+  <title>Student profile · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/student.css">
+  <script src="../js/env-check.js" defer></script>
+  <script type="module" src="../js/student.js"></script>
+</head>
+<body data-page="student">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-student">
+    <div class="container container-narrow">
+      <p class="student-back">
+        <a class="text-link" href="./leaderboard.html"><span aria-hidden="true">←</span> Back to leaderboard</a>
+      </p>
+
+      <div id="student-loading" class="card student-loading" aria-label="Loading student profile">
+        <div class="student-loading-hero" aria-hidden="true">
+          <span class="student-loading-avatar"></span>
+          <div class="skeleton-stack">
+            <span class="skeleton-line skeleton-line-wide"></span>
+            <span class="skeleton-line"></span>
+          </div>
+        </div>
+        <div class="student-loading-stats" aria-hidden="true">
+          <span class="skeleton-line"></span>
+          <span class="skeleton-line"></span>
+        </div>
+      </div>
+
+      <div id="student-error" class="card error-card" role="alert" hidden></div>
+
+      <article id="student-content" class="card student-card" aria-labelledby="student-name" hidden>
+        <div class="student-hero">
+          <span class="student-avatar" aria-hidden="true">
+            <img id="student-avatar-photo" class="avatar-photo" alt="" hidden>
+            <span id="student-avatar-initials">?</span>
+          </span>
+          <div class="student-identity">
+            <p class="eyebrow">Student profile</p>
+            <h1 id="student-name">Student</h1>
+            <p id="student-class" class="student-class">Freshman</p>
+            <div class="student-level">
+              <span id="student-level-chip" class="level-chip">Lv 1</span>
+              <span id="student-level-name" class="student-level-name">Rookie</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="student-stats">
+          <div class="student-stat">
+            <span class="student-stat-label">Studied today</span>
+            <strong id="student-today">0m</strong>
+          </div>
+          <div class="student-stat">
+            <span class="student-stat-label">Studied all time</span>
+            <strong id="student-total">0m</strong>
+          </div>
+        </div>
+
+        <div class="student-actions">
+          <a id="student-edit" class="btn btn-gold" href="./profile.html" hidden>Edit your profile</a>
+          <a class="btn btn-outline" href="./leaderboard.html">Back to leaderboard</a>
+        </div>
+      </article>
+
+      <p id="student-status" class="visually-hidden" aria-live="polite">Loading student profile.</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to show student profiles. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

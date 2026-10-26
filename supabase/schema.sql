@@ -11,6 +11,7 @@
 --    * a trigger that creates a profile for every new auth user
 --    * public.get_my_progress()      -> level, streak, bonus and total time
 --    * public.get_leaderboard(text)  -> safe top 10 + the caller's own row
+--    * public.get_public_profile(uuid) -> public student identity and study time
 --    * public.get_my_best_rank_this_month()
 --
 --  The Storage bucket itself and its object policies are configured in the
@@ -498,7 +499,9 @@ $$;
 --   3. user id, only to make the order deterministic
 --
 -- Only students with at least one session in the period are ranked. The
--- returned row exposes a display name, level and seconds - never an id/email.
+-- returned row exposes a display name, level, seconds, the public profile id
+-- (needed to open that student's profile) and the private avatar path - never
+-- an email or other private account field.
 
 create or replace function public.get_leaderboard(p_period text default 'today')
 returns jsonb
@@ -567,6 +570,7 @@ begin
            r.user_id,
            r.seconds,
            coalesce(nullif(btrim(p.full_name), ''), 'Student') as name,
+           p.avatar_path,
            coalesce((public.calculate_study_progress(r.user_id) ->> 'level')::integer, 1) as level
     from ranked r
     join public.profiles p on p.id = r.user_id
@@ -575,9 +579,11 @@ begin
            jsonb_agg(
              jsonb_build_object(
                'rank', sr.rank,
+               'profile_id', sr.user_id,
                'name', sr.name,
                'level', sr.level,
                'seconds', sr.seconds,
+               'avatar_path', sr.avatar_path,
                'is_you', sr.user_id = v_uid
              )
              order by sr.rank
@@ -590,9 +596,11 @@ begin
 
   select jsonb_build_object(
            'rank', sr.rank,
+           'profile_id', sr.user_id,
            'name', sr.name,
            'level', sr.level,
            'seconds', sr.seconds,
+           'avatar_path', sr.avatar_path,
            'is_you', true
          )
     into v_you
@@ -601,6 +609,7 @@ begin
            r.user_id,
            r.seconds,
            coalesce(nullif(btrim(p.full_name), ''), 'Student') as name,
+           p.avatar_path,
            coalesce((public.calculate_study_progress(r.user_id) ->> 'level')::integer, 1) as level
     from (
       select t.user_id,
@@ -635,7 +644,75 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 9. RPC: best daily rank in the current month
+-- 9. RPC: public student profile
+-- ----------------------------------------------------------------------------
+-- Another student's public identity: display name, class year, level, today's
+-- study time, all-time study time and avatar path. The daily goal, email and
+-- auth metadata are deliberately omitted.
+
+create or replace function public.get_public_profile(p_user_id uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  v_uid uuid := auth.uid();
+  v_timezone text := public.app_timezone();
+  v_today date;
+  v_start timestamptz;
+  v_end timestamptz;
+  v_profile public.profiles%rowtype;
+  v_progress jsonb;
+  v_today_seconds bigint := 0;
+begin
+  if v_uid is null then
+    raise exception 'Not signed in.' using errcode = '42501';
+  end if;
+
+  if p_user_id is null then
+    return null;
+  end if;
+
+  select p.*
+    into v_profile
+  from public.profiles p
+  where p.id = p_user_id;
+
+  if not found then
+    return null;
+  end if;
+
+  v_today := (now() at time zone v_timezone)::date;
+  v_start := v_today::timestamp at time zone v_timezone;
+  v_end := (v_today + 1)::timestamp at time zone v_timezone;
+
+  select coalesce(sum(s.duration_seconds), 0)::bigint
+    into v_today_seconds
+  from public.study_sessions s
+  where s.user_id = p_user_id
+    and s.start_time >= v_start
+    and s.start_time < v_end;
+
+  v_progress := public.calculate_study_progress(p_user_id);
+
+  return jsonb_build_object(
+    'profile_id', v_profile.id,
+    'full_name', coalesce(nullif(btrim(v_profile.full_name), ''), 'Student'),
+    'class_year', v_profile.class_year,
+    'level', coalesce((v_progress ->> 'level')::integer, 1),
+    'level_name', coalesce(v_progress ->> 'level_name', 'Rookie'),
+    'today_seconds', v_today_seconds,
+    'total_seconds', coalesce((v_progress ->> 'total_seconds')::bigint, 0),
+    'avatar_path', v_profile.avatar_path,
+    'is_you', v_profile.id = v_uid
+  );
+end;
+$$;
+
+-- ----------------------------------------------------------------------------
+-- 10. RPC: best daily rank in the current month
 -- ----------------------------------------------------------------------------
 
 create or replace function public.get_my_best_rank_this_month()
@@ -691,15 +768,17 @@ end;
 $$;
 
 -- ----------------------------------------------------------------------------
--- 10. Function privileges
+-- 11. Function privileges
 -- ----------------------------------------------------------------------------
 
 revoke all on function public.get_my_progress() from public, anon;
 revoke all on function public.get_leaderboard(text) from public, anon;
+revoke all on function public.get_public_profile(uuid) from public, anon;
 revoke all on function public.get_my_best_rank_this_month() from public, anon;
 
 grant execute on function public.get_my_progress() to authenticated;
 grant execute on function public.get_leaderboard(text) to authenticated;
+grant execute on function public.get_public_profile(uuid) to authenticated;
 grant execute on function public.get_my_best_rank_this_month() to authenticated;
 
 -- Trigger functions and internal helpers are not callable from the API.

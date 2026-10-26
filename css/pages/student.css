@@ -1,0 +1,187 @@
+/* --------------------------------------------------------------------------
+   Public student profile
+   -------------------------------------------------------------------------- */
+
+.page-student .student-back {
+  margin-bottom: 14px;
+}
+
+.student-loading,
+.student-card {
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.student-loading {
+  display: grid;
+  gap: 20px;
+}
+
+.student-loading-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-loading-hero .skeleton-stack {
+  flex: 1;
+}
+
+.student-loading-avatar {
+  width: 84px;
+  height: 84px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(244, 237, 225, 0.055);
+}
+
+.student-loading-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.student-card {
+  display: grid;
+  gap: clamp(20px, 3vw, 28px);
+  border-color: var(--line-gold);
+  background:
+    radial-gradient(420px 260px at 100% 0%, rgba(216, 180, 74, 0.1), transparent 70%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.02), transparent 55%),
+    var(--card);
+}
+
+.student-hero {
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 3vw, 24px);
+  min-width: 0;
+}
+
+.student-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(84px, 20vw, 112px);
+  height: clamp(84px, 20vw, 112px);
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--line-gold);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(233, 201, 95, 0.24), transparent 60%),
+    var(--card-soft);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.student-avatar .avatar-photo {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.student-identity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.student-identity h1 {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.65rem, 4.6vw, 2.35rem);
+}
+
+.student-class {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.student-level {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.student-level-name {
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.student-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.student-stat {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: rgba(7, 7, 6, 0.26);
+}
+
+.student-stat-label {
+  display: block;
+  color: var(--muted-2);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.student-stat strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 7px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 3.4vw, 1.7rem);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.student-actions .btn {
+  flex: 1 1 180px;
+}
+
+@media (min-width: 640px) {
+  .student-loading-avatar {
+    width: 104px;
+    height: 104px;
+  }
+
+  .student-stats {
+    gap: 14px;
+  }
+
+  .student-stat {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .student-hero {
+    align-items: flex-start;
+  }
+
+  .student-avatar {
+    width: 72px;
+    height: 72px;
+  }
+}

@@ -2,10 +2,12 @@ import './nav.js';
 import { LEADERBOARD_REFRESH_MS, PERIODS } from './config.js';
 import { requireAuth } from './guard.js';
 import { getLeaderboard } from './leaderboardData.js';
+import { getSignedFileUrl } from './storage.js';
 import {
   escapeHtml,
   formatCount,
-  formatDuration
+  formatDuration,
+  initials
 } from './utils.js';
 import {
   friendlyError,
@@ -31,26 +33,86 @@ let requestId = 0;
 let hasData = false;
 let refreshTimer = null;
 
-function rowMarkup(row) {
+function avatarMarkup(row) {
+  const fallback = escapeHtml(initials(row.name));
+  const photo = row.avatarPath
+    ? `<img class="leaderboard-avatar-photo" alt="" data-avatar-path="${escapeHtml(row.avatarPath)}" hidden>`
+    : '';
+  return `<span class="leaderboard-avatar" aria-hidden="true">
+    <span class="leaderboard-avatar-initials">${fallback}</span>
+    ${photo}
+  </span>`;
+}
+
+function rowInnerMarkup(row) {
   const rankClass = row.rank <= 3 ? ` rank-${row.rank}` : '';
-  return `<li class="leaderboard-row${row.isYou ? ' is-you' : ''}">
-    <span class="leaderboard-rank${rankClass}" aria-label="Rank ${row.rank}">${row.rank}</span>
-    <span class="leaderboard-name"><span class="leaderboard-name-text">${escapeHtml(row.name)}</span>${
-      row.isYou ? '<span class="you-badge">You</span>' : ''
-    }</span>
+  return `<span class="leaderboard-rank${rankClass}" aria-label="Rank ${row.rank}">${row.rank}</span>
+    <span class="leaderboard-name">
+      ${avatarMarkup(row)}
+      <span class="leaderboard-name-text">${escapeHtml(row.name)}</span>
+      ${row.isYou ? '<span class="you-badge">You</span>' : ''}
+    </span>
     <span class="level-chip">Lv ${row.level}</span>
-    <span class="leaderboard-time">${escapeHtml(formatDuration(row.seconds))}</span>
+    <span class="leaderboard-time">${escapeHtml(formatDuration(row.seconds))}</span>`;
+}
+
+function rowMarkup(row) {
+  const className = `leaderboard-row${row.isYou ? ' is-you' : ''}`;
+  if (!row.profileId) {
+    return `<li class="${className}"><span class="leaderboard-row-inner">${rowInnerMarkup(row)}</span></li>`;
+  }
+
+  const href = `./student.html?id=${encodeURIComponent(row.profileId)}`;
+  return `<li class="${className}">
+    <a class="leaderboard-row-inner leaderboard-row-link" href="${escapeHtml(href)}"
+      aria-label="View ${escapeHtml(row.name)}'s profile">${rowInnerMarkup(row)}</a>
   </li>`;
 }
 
 function skeletonMarkup(rows = 7) {
   return Array.from({ length: rows }, () => `
     <li class="leaderboard-row leaderboard-row-skeleton" aria-hidden="true">
-      <span class="skeleton-dot"></span>
-      <span class="skeleton-line skeleton-line-name"></span>
-      <span class="skeleton-line skeleton-line-chip"></span>
-      <span class="skeleton-line skeleton-line-time"></span>
+      <span class="leaderboard-row-inner">
+        <span class="skeleton-dot"></span>
+        <span class="skeleton-line skeleton-line-name"></span>
+        <span class="skeleton-line skeleton-line-chip"></span>
+        <span class="skeleton-line skeleton-line-time"></span>
+      </span>
     </li>`).join('');
+}
+
+/** Resolve private avatar paths to signed URLs without blocking the ranking. */
+function hydrateAvatars(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('img[data-avatar-path]').forEach((photo) => {
+    const path = photo.dataset.avatarPath;
+    if (!path || photo.dataset.avatarState === 'loading' || photo.dataset.avatarState === 'ready') {
+      return;
+    }
+    photo.dataset.avatarState = 'loading';
+
+    getSignedFileUrl(path)
+      .then((url) => {
+        if (!url || !photo.isConnected) return;
+        photo.addEventListener('load', () => {
+          if (!photo.isConnected) return;
+          photo.hidden = false;
+          photo.dataset.avatarState = 'ready';
+          photo.closest('.leaderboard-avatar')?.classList.add('has-photo');
+        }, { once: true });
+        photo.addEventListener('error', () => {
+          photo.hidden = true;
+          photo.removeAttribute('src');
+          photo.dataset.avatarState = 'failed';
+        }, { once: true });
+        photo.src = url;
+      })
+      .catch(() => {
+        photo.hidden = true;
+        photo.removeAttribute('src');
+        photo.dataset.avatarState = 'failed';
+      });
+  });
 }
 
 function updateTabs() {
@@ -87,6 +149,7 @@ function showYouOutside(row) {
   }
   elements.youWrap.hidden = false;
   elements.youList.innerHTML = rowMarkup(row);
+  hydrateAvatars(elements.youList);
 }
 
 function setStatus(message) {
@@ -111,6 +174,8 @@ function render(data) {
           : 'The board is waiting for its first session in this period.'
     });
   }
+
+  hydrateAvatars(elements.list);
 
   const ownRow = data.rows.find((row) => row.isYou) ?? data.you;
   showYouOutside(ownRow && !data.rows.some((row) => row.isYou) ? ownRow : null);

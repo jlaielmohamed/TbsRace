@@ -45,7 +45,7 @@
 }
 
 .leaderboard-columns,
-.leaderboard-row {
+.leaderboard-row-inner {
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr) 56px 68px;
   align-items: center;
@@ -68,10 +68,21 @@
 }
 
 .leaderboard-row {
-  min-height: 56px;
-  padding: 8px 16px;
   border-top: 1px solid var(--line);
   transition: background-color 160ms var(--ease);
+}
+
+.leaderboard-row-inner {
+  min-height: 56px;
+  padding: 8px 16px;
+}
+
+.leaderboard-row-link {
+  color: inherit;
+}
+
+.leaderboard-row-link:focus-visible {
+  outline-offset: -3px;
 }
 
 .leaderboard-row:first-child {
@@ -119,6 +130,35 @@
   border-color: rgba(201, 140, 90, 0.35);
   background: #b97c4d;
   color: #21160e;
+}
+
+.leaderboard-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid var(--line-gold);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(233, 201, 95, 0.2), transparent 65%),
+    var(--card-soft);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.leaderboard-avatar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .leaderboard-name {
@@ -213,7 +253,7 @@
   font-size: 0.73rem;
 }
 
-.leaderboard-you-list .leaderboard-row {
+.leaderboard-you-list .leaderboard-row-inner {
   padding-inline: 0;
   border-top: 0;
 }
@@ -238,19 +278,25 @@
 
 @media (min-width: 560px) {
   .leaderboard-columns,
-  .leaderboard-row {
+  .leaderboard-row-inner {
     grid-template-columns: 48px minmax(0, 1fr) 64px 78px;
     gap: 12px;
     padding-inline: 22px;
   }
 
-  .leaderboard-row {
+  .leaderboard-row-inner {
     min-height: 58px;
   }
 
   .leaderboard-rank {
     width: 33px;
     height: 33px;
+  }
+
+  .leaderboard-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.66rem;
   }
 
   .leaderboard-name {
@@ -290,7 +336,7 @@
   }
 
   .leaderboard-columns,
-  .leaderboard-row {
+  .leaderboard-row-inner {
     grid-template-columns: 54px minmax(0, 1fr) 76px 92px;
     gap: 14px;
     padding-inline: 28px;
@@ -300,7 +346,7 @@
     padding-block: 15px 12px;
   }
 
-  .leaderboard-row {
+  .leaderboard-row-inner {
     min-height: 62px;
   }
 
@@ -320,14 +366,14 @@
 }
 
 @media (min-width: 1100px) {
-  .leaderboard-row {
+  .leaderboard-row-inner {
     min-height: 64px;
   }
 }
 
 @media (max-width: 380px) {
   .leaderboard-columns,
-  .leaderboard-row {
+  .leaderboard-row-inner {
     grid-template-columns: 34px minmax(0, 1fr) 48px 56px;
     gap: 6px;
     padding-inline: 12px;
@@ -337,6 +383,12 @@
     width: 27px;
     height: 27px;
     font-size: 0.72rem;
+  }
+
+  .leaderboard-avatar {
+    width: 26px;
+    height: 26px;
+    font-size: 0.55rem;
   }
 
   .leaderboard-name {

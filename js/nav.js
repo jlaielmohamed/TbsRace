@@ -18,8 +18,13 @@ function currentFile() {
   return window.location.pathname.split('/').pop() || 'timer.html';
 }
 
+function activeNavFile() {
+  const file = currentFile();
+  return file === 'student.html' ? 'leaderboard.html' : file;
+}
+
 function navigationMarkup() {
-  const active = currentFile();
+  const active = activeNavFile();
   return NAV_ITEMS.map((item) => {
     const isActive = item.file === active;
     return `<a class="nav-link${isActive ? ' is-active' : ''}" href="./${item.file}"${
@@ -67,6 +72,7 @@ function appHeaderMarkup() {
               </div>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="./profile.html" role="menuitem">Edit profile</a>
+              <a class="dropdown-item" href="./student.html" data-public-profile role="menuitem" hidden>View public profile</a>
               <button class="dropdown-item" type="button" role="menuitem" data-sign-out>Sign out</button>
             </div>
           </div>
@@ -248,6 +254,12 @@ async function hydrateHeader(header) {
 
     const metadataName = String(user.user_metadata?.full_name ?? '');
     updateIdentity(header, null, metadataName);
+
+    const publicLink = header.querySelector('[data-public-profile]');
+    if (publicLink && user.id) {
+      publicLink.href = `./student.html?id=${encodeURIComponent(user.id)}`;
+      publicLink.hidden = false;
+    }
 
     try {
       const profile = await getProfile();

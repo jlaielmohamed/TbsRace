@@ -55,7 +55,7 @@ The current feature is the profile picture:
 
 #### Bucket and policies
 
-Create the bucket with **Public bucket off**, then add four policies on `storage.objects` for `authenticated`. `(storage.foldername(name))[1]` is the first path segment, so it equals the owner's user id for a valid path:
+Create the bucket with **Public bucket off**, then add five policies on `storage.objects` for `authenticated`. `(storage.foldername(name))[1]` is the first path segment, so it equals the owner's user id for a valid path:
 
 ```sql
 create policy "TbsRace: read own app files"
@@ -63,6 +63,17 @@ create policy "TbsRace: read own app files"
   using (
     bucket_id = 'app-files'
     and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+
+-- Profile pictures must be visible to every signed-in student, because they
+-- appear on the leaderboard and public student profiles. A signed URL for
+-- another user's object fails without this read policy.
+create policy "TbsRace: read student profile pictures"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'app-files'
+    and (storage.foldername(name))[2] = 'profile'
+    and array_length(storage.foldername(name), 1) = 3
   );
 
 create policy "TbsRace: insert own app files"
@@ -95,7 +106,7 @@ If these policy names already exist, do not create duplicates. Policies are the 
 
 #### Display and deletion
 
-- The bucket is private, so `getSignedFileUrl()` calls `createSignedUrl(path, 3600)` and the page displays that URL. The client caches signed URLs per page and refreshes them after expiry.
+- The bucket is private, so `getSignedFileUrl()` calls `createSignedUrl(path, 3600)` and the page displays that URL. The client caches signed URLs per page and refreshes them after expiry. The header, leaderboard and public student profile all use the same helper.
 - **Upload:** upload the object → write `avatar_path` to `profiles` → delete the previous object. If the profile update fails, the new object is removed immediately.
 - **Remove:** set `avatar_path = null` → delete the object. The database reference is cleared first so a failed Storage delete never leaves a broken image.
 - `removeStoredFile(path, { userId })` refuses paths that do not start with the given user id.
@@ -123,10 +134,11 @@ An orphan is an object with no matching `profiles.avatar_path`; remove it in **S
 | --- | --- | --- |
 | `public.get_my_progress()` | `jsonb` progress object | `authenticated` |
 | `public.get_leaderboard(p_period text default 'today')` | `jsonb` leaderboard payload | `authenticated` |
+| `public.get_public_profile(p_user_id uuid)` | `jsonb` public student profile or `null` | `authenticated` |
 | `public.get_my_best_rank_this_month()` | `integer` or `null` | `authenticated` |
 | `public.calculate_study_progress(uuid)` | `jsonb` internal helper | no API role |
 
-`calculate_study_progress` is `security definer` because the leaderboard needs to calculate levels for other students. Execute is revoked from `public`, `anon` and `authenticated`; only the safe RPCs call it.
+`calculate_study_progress` is `security definer` because the leaderboard and public profiles need to calculate levels for other students. Execute is revoked from `public`, `anon` and `authenticated`; only the safe RPCs call it.
 
 ### RPC payloads
 
@@ -157,15 +169,49 @@ An orphan is an object with no matching `profiles.avatar_path`; remove it in **S
 {
   "period": "today",
   "rows": [
-    { "rank": 1, "name": "Ada Lovelace", "level": 3, "seconds": 7200, "is_you": false }
+    {
+      "rank": 1,
+      "profile_id": "00000000-0000-4000-8000-000000000001",
+      "name": "Ada Lovelace",
+      "level": 3,
+      "seconds": 7200,
+      "avatar_path": "00000000-0000-4000-8000-000000000001/profile/00000000-0000-4000-8000-000000000001/7c9e…jpg",
+      "is_you": false
+    }
   ],
-  "you": { "rank": 4, "name": "Grace Hopper", "level": 2, "seconds": 1800, "is_you": true },
+  "you": {
+    "rank": 4,
+    "profile_id": "00000000-0000-4000-8000-000000000002",
+    "name": "Grace Hopper",
+    "level": 2,
+    "seconds": 1800,
+    "avatar_path": null,
+    "is_you": true
+  },
   "total_students": 42,
   "generated_at": "2026-10-25T10:00:00+00:00"
 }
 ```
 
-`you` is `null` when the caller has no session in the selected period. Rows never include ids, emails or other profile columns.
+`you` is `null` when the caller has no session in the selected period. Rows include `profile_id` so the leaderboard can link to `pages/student.html?id=…`, and `avatar_path` so it can request a signed image URL. They never include emails or other private profile columns.
+
+`get_public_profile('<profile uuid>')`:
+
+```json
+{
+  "profile_id": "00000000-0000-4000-8000-000000000001",
+  "full_name": "Ada Lovelace",
+  "class_year": "Senior",
+  "level": 3,
+  "level_name": "Grinder",
+  "today_seconds": 5400,
+  "total_seconds": 123456,
+  "avatar_path": "00000000-0000-4000-8000-000000000001/profile/00000000-0000-4000-8000-000000000001/7c9e…jpg",
+  "is_you": false
+}
+```
+
+The function returns `null` when the profile does not exist. It exposes only public identity and study totals; `daily_goal_minutes`, email addresses, account metadata and session rows stay private.
 
 `get_my_best_rank_this_month()` returns the caller's best **daily** rank in the current local month, or `null` if they have not studied this month.
 
@@ -177,9 +223,9 @@ An orphan is an object with no matching `profiles.avatar_path`; remove it in **S
 - `profiles`: select/update only rows where `id = auth.uid()`. Students cannot insert profiles directly; the auth trigger does that with definer rights.
 - `study_sessions`: select/insert only rows where `user_id = auth.uid()`. There is no update or delete policy, so history is immutable from the client.
 - Table grants are column-scoped. This prevents changing `profiles.id`, `created_at`, `updated_at` or writing a session for another user even if a future policy were too broad. The writable profile columns are `full_name`, `class_year`, `daily_goal_minutes` and `avatar_path`.
-- `app-files` is private, and its Storage policies restrict every read/write/delete to objects whose first path segment equals `auth.uid()`. The `profiles.avatar_path` check constraint enforces the `<id>/profile/<id>/<uuid>.<ext>` shape as a second layer.
+- `app-files` is private. Its Storage policies restrict every write/delete to objects whose first path segment equals `auth.uid()`, while reads are allowed for the owner or for objects in a `/profile/` folder so students can see each other's pictures. The `profiles.avatar_path` check constraint enforces the `<id>/profile/<id>/<uuid>.<ext>` shape as a second layer.
 - `anon` has no table privileges and no RPC execute privileges.
-- The leaderboard and best-rank functions are `security definer` but return only the minimum fields needed by the UI.
+- The leaderboard, public-profile and best-rank functions are `security definer` but return only the public fields needed by the UI. The public profile exposes name, class year, level, today/all-time study time and avatar path - never the daily goal, email or session history.
 - All definer functions pin `search_path = public, pg_temp`.
 
 RLS is the security boundary. The frontend guard only decides where to send a signed-out visitor.
@@ -228,6 +274,7 @@ select id, full_name from public.profiles;                                  -- o
 select count(*) from public.study_sessions where user_id = '<ACCOUNT_B_UUID>'; -- 0
 select public.get_my_progress();
 select public.get_leaderboard('today');
+select public.get_public_profile('<ACCOUNT_B_UUID>'); -- public fields only
 insert into public.study_sessions
   (user_id, subject, start_time, end_time, duration_seconds, planned_duration_seconds)
 values
@@ -364,7 +411,7 @@ select jsonb_pretty(public.get_leaderboard('month'));
 rollback;
 ```
 
-Confirm the JSON has no ids or emails.
+Confirm the JSON has no emails, daily goals or session rows. The only id is `profile_id`, which the leaderboard needs to link to a public profile.
 
 ### Clean up test accounts
 
@@ -384,6 +431,7 @@ This deletes all profiles and sessions. Use it only on a throwaway project.
 drop trigger if exists on_auth_user_created on auth.users;
 
 drop function if exists public.get_my_best_rank_this_month();
+drop function if exists public.get_public_profile(uuid);
 drop function if exists public.get_leaderboard(text);
 drop function if exists public.get_my_progress();
 drop function if exists public.calculate_study_progress(uuid);
@@ -416,7 +464,7 @@ Then run `schema.sql` again. Existing auth users will not automatically get prof
 | `new row violates row-level security policy` | A client tried to write another user's row or upload outside its own Storage folder | Expected. Keep RLS on; do not add update/delete policies for sessions, and keep the `auth.uid()` folder check on `app-files` |
 | `Bucket not found` | The `app-files` bucket is missing or renamed | Create it under **Storage → Buckets**; do not change `STORAGE_BUCKET` unless you deliberately rename it |
 | `Payload too large` / maximum size exceeded | The image is over the frontend or bucket limit | Choose an image under 5 MB; raise both `MAX_IMAGE_BYTES` and the bucket limit if the product rule changes |
-| A profile photo uploads but the image is blank | The bucket is private and the signed URL or CSP is failing | Add the Storage `select` policy, and keep `img-src ... https://*.supabase.co` in the CSP |
+| A profile photo uploads but the image is blank | The bucket is private and the signed URL or CSP is failing | Add the Storage `select` policies (own files and `/profile/` pictures), and keep `img-src ... https://*.supabase.co` in the CSP |
 | `permission denied for table study_sessions` | Anonymous role or missing grant | Expected for `anon`; make sure the request is authenticated |
 | `function public.get_leaderboard(text) does not exist` | Schema not applied or stale PostgREST cache | Run `schema.sql`; `notify pgrst, 'reload schema';` |
 | `Your profile could not be found` | User predates the trigger or the trigger failed | Run the backfill query in the root README |

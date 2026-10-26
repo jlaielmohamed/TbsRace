@@ -392,7 +392,7 @@ export function sumDuration(sessions) {
 
 export function safeInternalNext(rawNext) {
   const value = String(rawNext ?? '').trim();
-  if (!/^(timer|leaderboard|calendar|levels|stats)\.html(?:\?[^#]*)?$/.test(value)) {
+  if (!/^(timer|leaderboard|calendar|levels|stats|student)\.html(?:\?[^#]*)?$/.test(value)) {
     return 'timer.html';
   }
   return value;
