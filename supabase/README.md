@@ -208,7 +208,7 @@ Thresholds, names and next-level progress are defined in `public.calculate_study
 - A **goal day** is a local day with total saved seconds at or above `daily_goal_minutes × 60`.
 - A **streak day** is a local day with at least one session. The streak walks backwards from today; if today has no session yet, yesterday can anchor it because today is not over.
 - Both are recalculated from the immutable session history each time progress is requested.
-- If a student edits `daily_goal_minutes`, historical goal days are recalculated using the current goal. There is no settings UI for this in the current app.
+- If a student edits `daily_goal_minutes` on the **Edit profile** page, historical goal days are recalculated using the current goal.
 
 ### Leaderboard
 

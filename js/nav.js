@@ -9,7 +9,8 @@ const NAV_ITEMS = [
   { file: 'leaderboard.html', label: 'Leaderboard' },
   { file: 'calendar.html', label: 'Calendar' },
   { file: 'levels.html', label: 'Levels' },
-  { file: 'stats.html', label: 'Stats', longLabel: 'My stats' }
+  { file: 'stats.html', label: 'Stats', longLabel: 'My stats' },
+  { file: 'profile.html', label: 'Profile' }
 ];
 
 function currentFile() {
@@ -64,6 +65,7 @@ function appHeaderMarkup() {
                 <span class="user-dropdown-class">TBS</span>
               </div>
               <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="./profile.html" role="menuitem">Edit profile</a>
               <button class="dropdown-item" type="button" role="menuitem" data-sign-out>Sign out</button>
             </div>
           </div>
@@ -165,6 +167,12 @@ function updateIdentity(header, profile, metadataName = '') {
   if (nameElement) nameElement.textContent = name;
   if (classElement) classElement.textContent = classYear;
   if (button) button.setAttribute('aria-label', `Open account menu for ${name}`);
+}
+
+/** Refresh the avatar, name and class after a profile update. */
+export function refreshHeaderIdentity(profile) {
+  const header = document.querySelector('#site-header .site-header');
+  if (header) updateIdentity(header, profile);
 }
 
 function clearLocalTimerState() {

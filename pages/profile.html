@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0a0a09">
+  <meta name="description" content="Update your TbsRace display name, class year and daily study goal.">
+  <title>Edit profile · TbsRace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/auth.css">
+  <link rel="stylesheet" href="../css/pages/profile.css">
+  <script src="../js/env-check.js" defer></script>
+  <script type="module" src="../js/profileEdit.js"></script>
+</head>
+<body data-page="profile">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header" data-nav="app"></div>
+
+  <main id="main" class="page page-profile">
+    <div class="container container-narrow">
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow">Your account</p>
+          <h1>Edit profile</h1>
+          <p class="page-lede">Choose the name and class other students see, and set the daily goal that powers your bonus progress.</p>
+        </div>
+      </header>
+
+      <div id="profile-error" class="card error-card" role="alert" hidden></div>
+
+      <div id="profile-content" class="profile-layout" hidden>
+        <section class="card profile-card" aria-labelledby="profile-form-title">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Identity</p>
+              <h2 id="profile-form-title">Profile details</h2>
+            </div>
+          </div>
+
+          <form id="profile-form" class="profile-form" novalidate>
+            <div class="field">
+              <label class="field-label" for="profile-name">Display name</label>
+              <input id="profile-name" name="full_name" type="text" maxlength="80" autocomplete="name"
+                required aria-describedby="profile-name-hint profile-name-error">
+              <p id="profile-name-hint" class="field-hint">This is the name other students see on the leaderboard.</p>
+              <p id="profile-name-error" class="field-error" hidden></p>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="profile-email">Email</label>
+              <input id="profile-email" name="email" type="email" readonly autocomplete="email"
+                aria-describedby="profile-email-hint">
+              <p id="profile-email-hint" class="field-hint">Your sign-in email. It cannot be changed here.</p>
+            </div>
+
+            <fieldset class="class-fieldset" aria-describedby="profile-class-error">
+              <legend class="field-label">Class year</legend>
+              <div class="class-grid">
+                <label class="class-option">
+                  <input type="radio" name="class_year" value="Freshman" required>
+                  <span class="class-card">
+                    <span class="class-name">Freshman</span>
+                    <span class="class-year">1st year</span>
+                  </span>
+                </label>
+                <label class="class-option">
+                  <input type="radio" name="class_year" value="Sophomore" required>
+                  <span class="class-card">
+                    <span class="class-name">Sophomore</span>
+                    <span class="class-year">2nd year</span>
+                  </span>
+                </label>
+                <label class="class-option">
+                  <input type="radio" name="class_year" value="Junior" required>
+                  <span class="class-card">
+                    <span class="class-name">Junior</span>
+                    <span class="class-year">3rd year</span>
+                  </span>
+                </label>
+                <label class="class-option">
+                  <input type="radio" name="class_year" value="Senior" required>
+                  <span class="class-card">
+                    <span class="class-name">Senior</span>
+                    <span class="class-year">4th year</span>
+                  </span>
+                </label>
+              </div>
+              <p id="profile-class-error" class="field-error" hidden></p>
+            </fieldset>
+
+            <div class="field">
+              <label class="field-label" for="profile-goal">Daily goal</label>
+              <div class="goal-input-row">
+                <input id="profile-goal" name="daily_goal_minutes" type="number" min="30" max="720"
+                  step="5" inputmode="numeric" required aria-describedby="profile-goal-hint profile-goal-error">
+                <span class="goal-unit">minutes</span>
+              </div>
+              <p id="profile-goal-hint" class="field-hint">Between 30 and 720 minutes. Reaching your goal each day earns bonus progress.</p>
+              <p id="profile-goal-error" class="field-error" hidden></p>
+            </div>
+
+            <p id="profile-message" class="form-message" role="status" hidden></p>
+
+            <div class="profile-actions">
+              <button id="profile-save" class="btn btn-gold" type="submit">Save changes</button>
+              <a class="btn btn-outline" href="./timer.html">Cancel</a>
+            </div>
+          </form>
+        </section>
+
+        <aside class="profile-aside" aria-label="Profile preview">
+          <section class="card profile-preview" aria-labelledby="profile-preview-title">
+            <p class="eyebrow">How you appear</p>
+            <h2 id="profile-preview-title">Leaderboard preview</h2>
+            <div class="preview-identity">
+              <span id="profile-preview-avatar" class="preview-avatar" aria-hidden="true">?</span>
+              <div class="preview-copy">
+                <strong id="profile-preview-name" class="preview-name">Student</strong>
+                <span id="profile-preview-class" class="preview-class">Freshman</span>
+              </div>
+            </div>
+            <p id="profile-preview-goal" class="preview-goal">60 min daily goal</p>
+            <p class="preview-note">Your email is never shown to other students.</p>
+          </section>
+
+          <section class="card profile-tip" aria-labelledby="profile-tip-title">
+            <p class="eyebrow">Good to know</p>
+            <h2 id="profile-tip-title">Your daily goal</h2>
+            <p id="profile-tip-copy">Set a goal you can reach on a normal day. Goal days and your current streak both add a small bonus to your level progress.</p>
+          </section>
+        </aside>
+      </div>
+
+      <p id="profile-status" class="visually-hidden" aria-live="polite">Loading your profile.</p>
+    </div>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">TbsRace needs JavaScript to edit your profile. Please enable it and refresh.</p>
+  </noscript>
+</body>
+</html>

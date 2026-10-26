@@ -14,6 +14,7 @@ TbsRace is a static site: plain HTML, CSS and JavaScript ES modules. There is no
 - **Stats** for today, this week, this month and all time, plus a weekly chart, subject mix, best time of day, records and level progress.
 - **Leaderboard** for today, this month and all time, with a safe top 10 and an isolated row for the signed-in student.
 - **Auth** with email/password sign-up (Gmail or any other provider, no confirmation step), Google sign-in, password reset and persistent sessions.
+- **Profile editing** where every signed-in student can update their display name, class year and daily goal.
 - **Responsive, accessible dark UI** designed at 360, 768, 1024 and 1440 px, with 44 px touch targets wherever the layout allows (the dense calendar grid still clears the 24 px accessible minimum with clear spacing), safe-area padding, focus states, skip links and reduced-motion support.
 
 ---
@@ -32,6 +33,7 @@ tbsrace/
 │   ├── calendar.html
 │   ├── levels.html
 │   ├── stats.html
+│   ├── profile.html
 │   └── leaderboard.html
 ├── css/
 │   ├── base.css                # tokens, reset, typography, accessibility
@@ -44,6 +46,7 @@ tbsrace/
 │       ├── calendar.css
 │       ├── levels.css
 │       ├── stats.css
+│       ├── profile.css
 │       └── leaderboard.css
 ├── js/
 │   ├── config.js               # Supabase keys, timezone and product rules
@@ -64,6 +67,7 @@ tbsrace/
 │   ├── calendar.js
 │   ├── levels.js
 │   ├── stats.js
+│   ├── profileEdit.js
 │   └── leaderboard.js
 ├── assets/
 │   ├── favicon.svg
@@ -186,7 +190,7 @@ All product rules live in `js/config.js` and are mirrored in `supabase/schema.sq
 
 **Important:** the database is the source of truth for levels, bonus, streaks and rankings. If you change a threshold or the timezone, update both the JavaScript and the SQL, then rerun `supabase/schema.sql` (or just the changed functions). Do not change only one side.
 
-The daily goal default applies to **new** profiles. Existing rows keep whatever value they were created with, so after changing it run this once to bring everyone onto the new goal:
+The daily goal default applies to **new** profiles. Students can change their own goal on the **Edit profile** page, which reads and writes `public.profiles.daily_goal_minutes`. To bring every existing profile back to the current default, run this once:
 
 ```sql
 update public.profiles set daily_goal_minutes = public.daily_goal_default_minutes();
@@ -404,6 +408,7 @@ The `p_period` value must be `today`, `month` or `all`; anything else raises a v
 - [ ] Finishing under one minute discards the session; finishing at or above one minute saves it.
 - [ ] The plan-end alert is visible and audible (after the first user interaction unlocks audio).
 - [ ] Calendar month/day views, timeline, Levels, Stats and all three leaderboard periods render.
+- [ ] Editing the profile saves the name, class year and daily goal, updates the header immediately and persists after a reload.
 - [ ] Empty, loading and error states are reachable and understandable.
 - [ ] No console errors, broken imports or 404s.
 - [ ] No horizontal page scroll at 360, 768, 1024 and 1440 px.
@@ -472,7 +477,7 @@ The database requires `duration_seconds` to fit inside `end_time - start_time` (
 - **Sessions are immutable** from the client: no update or delete policy exists.
 - **Time is client-reported.** A determined student could insert a fabricated but internally consistent session for their own account. The schema validates shape and limits but cannot prove real-world focus. If cheating becomes a concern, add server-side session start/stop tokens or a moderation workflow.
 - **No realtime subscription** for the leaderboard; it refreshes every 60 seconds and when the tab becomes visible.
-- **Daily goal editing** is supported by the schema but there is no settings screen in this version; all profiles start at 60 minutes.
+- **Profile editing is scoped**: a student can update only their own row through RLS, and column grants limit writes to `full_name`, `class_year` and `daily_goal_minutes`. The email is read from Supabase Auth and is read-only in the UI.
 - **Static hosting** means there is no server-side rendering and no secrets in the frontend. That is intentional.
 
 ---

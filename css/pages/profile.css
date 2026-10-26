@@ -1,0 +1,155 @@
+/* --------------------------------------------------------------------------
+   Edit profile page
+   -------------------------------------------------------------------------- */
+
+.profile-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.page-profile .error-card {
+  margin-bottom: 20px;
+}
+
+.profile-card {
+  padding: clamp(20px, 3vw, 30px);
+}
+
+.profile-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.page-profile .class-fieldset[aria-invalid="true"] .class-card {
+  border-color: var(--coral);
+}
+
+.goal-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.goal-input-row input {
+  max-width: 170px;
+}
+
+.goal-unit {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.profile-actions .btn {
+  flex: 1 1 170px;
+}
+
+.profile-aside {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-preview,
+.profile-tip {
+  padding: clamp(18px, 3vw, 24px);
+}
+
+.profile-preview h2,
+.profile-tip h2 {
+  margin-top: 4px;
+  font-size: 1.05rem;
+}
+
+.preview-identity {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-top: 18px;
+}
+
+.preview-avatar {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border: 1px solid var(--line-gold);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(233, 201, 95, 0.24), transparent 60%),
+    var(--card-soft);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.preview-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.preview-name {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-class {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.preview-goal {
+  display: inline-flex;
+  margin-top: 16px;
+  padding: 5px 10px;
+  border: 1px solid var(--line-gold);
+  border-radius: 999px;
+  background: var(--gold-wash);
+  color: var(--gold-bright);
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+
+.preview-note,
+.profile-tip p:not(.eyebrow) {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.profile-tip p:not(.eyebrow) {
+  margin-top: 10px;
+}
+
+@media (min-width: 880px) {
+  .profile-layout {
+    grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.85fr);
+    align-items: start;
+  }
+
+  .profile-aside {
+    position: sticky;
+    top: calc(var(--header-h) + 20px);
+  }
+}
+
+@media (max-width: 420px) {
+  .goal-input-row input {
+    max-width: none;
+  }
+}
