@@ -94,10 +94,17 @@ body[data-page="active-timer"]::before {
 }
 
 .page-active-timer .timer-display {
+  width: 100%;
   margin-top: 16px;
-  font-size: clamp(4rem, 16vw, 9rem);
+  font-size: clamp(2.4rem, 6vw, 5rem);
   font-weight: 700;
-  letter-spacing: -0.09em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.075em;
+  text-align: center;
+}
+
+.page-active-timer .timer-ring-inner {
+  padding: 8%;
 }
 
 .page-active-timer .timer-status {
