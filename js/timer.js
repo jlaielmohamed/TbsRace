@@ -363,6 +363,7 @@ function startTimer() {
   persistState();
   renderTimer();
   showToast('Focus session started. You’ve got this.', 'success');
+  window.location.href = './pages/active-timer.html';
 }
 
 function toggleTimer() {
