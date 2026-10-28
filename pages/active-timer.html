@@ -15,10 +15,101 @@
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/pages/timer.css">
+  <style>
+    /* Focused, Centered, and High-Impact Design for Active Timer */
+    .page-active-timer {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding-block: 20px;
+      background: radial-gradient(circle at center, rgba(216, 180, 74, 0.05) 0%, transparent 70%);
+    }
+    .page-active-timer .container {
+      display: grid;
+      place-items: center;
+      width: 100%;
+    }
+    .page-active-timer .timer-layout {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+    }
+    .page-active-timer .timer-card {
+      margin-inline: auto;
+      text-align: center;
+      max-width: 480px;
+      width: 100%;
+      padding: clamp(30px, 5vw, 50px);
+      border: 2px solid var(--line-gold);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.6), 0 0 20px rgba(216, 180, 74, 0.1);
+    }
+    .page-active-timer .timer-ring-wrap {
+      width: min(100%, 440px);
+      margin-bottom: 40px;
+      transform: scale(1.1);
+    }
+    .page-active-timer .timer-display {
+      font-size: clamp(3rem, 15vw, 5rem) !important;
+      letter-spacing: -0.05em !important;
+    }
+    .page-active-timer .timer-form {
+      display: grid;
+      gap: 32px;
+      justify-items: center;
+    }
+    .page-active-timer .field {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .page-active-timer .field-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .page-active-timer #subject-display {
+      font-size: 1.4rem;
+      font-weight: 700;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line-gold);
+      border-radius: 12px;
+      text-align: center;
+      color: var(--text);
+      width: 100%;
+    }
+    .page-active-timer .timer-actions {
+      width: 100%;
+      max-width: 440px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      justify-content: center;
+    }
+    .page-active-timer .btn-timer {
+      min-height: 64px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 16px;
+    }
+    .page-active-timer .site-footer {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      border: 0;
+      background: transparent;
+    }
+  </style>
   <script type="module" src="../js/active-timer.js"></script>
 </head>
 <body data-page="active-timer">
-  <main id="main" class="page page-timer">
+  <main id="main" class="page page-active-timer">
     <div class="container">
       <div class="timer-layout">
         <section class="card timer-card" aria-labelledby="timer-heading">
