@@ -6,7 +6,6 @@ import {
 import { requireAuth } from './guard.js';
 import { createSession } from './sessions.js';
 import {
-  escapeHtml,
   formatTimerClock,
   formatDuration,
   remainingMinutes
@@ -26,7 +25,6 @@ const elements = {
   ringProgress: document.getElementById('timer-ring-progress'),
   toggle: document.getElementById('timer-toggle'),
   finish: document.getElementById('timer-finish'),
-  subject: document.getElementById('subject-display'),
   alert: document.getElementById('timer-alert')
 };
 
@@ -74,7 +72,7 @@ function renderTimer() {
   const plannedSeconds = timerState?.plannedSeconds ?? 0;
   const progress = plannedSeconds > 0 ? Math.min(1, elapsedSeconds / plannedSeconds) : 0;
 
-  elements.display.textContent = formatTimerClock(elapsedSeconds);
+  elements.display.textContent = formatTimerClock(Math.max(0, plannedSeconds - elapsedSeconds));
   if (elements.ringProgress) {
     const radius = elements.ringProgress.r.baseVal.value;
     const circumference = 2 * Math.PI * radius;
@@ -89,8 +87,6 @@ function renderTimer() {
   elements.toggle.textContent = timerState.status === 'running' ? 'Pause' : 'Resume';
   elements.toggle.disabled = saving;
   elements.finish.disabled = saving;
-  elements.subject.value = timerState.subject;
-
   const remaining = plannedSeconds - elapsedSeconds;
   if (remaining >= 0) {
     elements.subline.textContent = `of ${formatDuration(plannedSeconds)} · ${remainingMinutes(remaining)}m left`;
