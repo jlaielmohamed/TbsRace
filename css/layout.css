@@ -207,6 +207,8 @@
   position: relative;
 }
 
+/* ... (existing code) ... */
+
 .avatar-button {
   position: relative;
   display: grid;
@@ -383,4 +385,20 @@
   .brand {
     font-size: 1.1rem;
   }
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.site-footer {
+  padding-block: 24px;
+  text-align: center;
+  border-top: 1px solid var(--line);
+  margin-top: auto;
+}
+
+.site-footer-copy {
+  color: var(--muted);
+  font-size: 0.875rem;
 }
