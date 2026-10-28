@@ -16,94 +16,116 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/pages/timer.css">
   <style>
-    /* Focused, Centered, and High-Impact Design for Active Timer */
+    /* FORCED CENTERING AND HIGH VISIBILITY DESIGN */
+    body[data-page="active-timer"] {
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Prevent scrolling to keep it perfectly centered */
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(216, 180, 74, 0.08) 0%, #0a0a09 70%);
+    }
     .page-active-timer {
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-      padding-block: 20px;
-      background: radial-gradient(circle at center, rgba(216, 180, 74, 0.05) 0%, transparent 70%);
+      display: grid !important;
+      place-items: center !important;
+      width: 100% !important;
+      height: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
     }
     .page-active-timer .container {
-      display: grid;
-      place-items: center;
-      width: 100%;
+      display: grid !important;
+      place-items: center !important;
+      max-width: none !important;
+      width: 100% !important;
     }
     .page-active-timer .timer-layout {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      width: 100% !important;
     }
     .page-active-timer .timer-card {
-      margin-inline: auto;
-      text-align: center;
-      max-width: 480px;
-      width: 100%;
-      padding: clamp(30px, 5vw, 50px);
-      border: 2px solid var(--line-gold);
-      box-shadow: 0 0 60px rgba(0, 0, 0, 0.6), 0 0 20px rgba(216, 180, 74, 0.1);
+      margin: 0 auto !important;
+      text-align: center !important;
+      max-width: 520px !important;
+      width: 90% !important;
+      padding: clamp(40px, 6vw, 60px) !important;
+      border: 3px solid var(--line-gold) !important;
+      box-shadow: 0 0 80px rgba(0, 0, 0, 0.8), 0 0 30px rgba(216, 180, 74, 0.15) !important;
+      z-index: 10;
     }
     .page-active-timer .timer-ring-wrap {
-      width: min(100%, 440px);
-      margin-bottom: 40px;
-      transform: scale(1.1);
+      width: min(100%, 480px) !important;
+      margin: 0 auto 50px !important;
+      transform: scale(1.2) !important;
     }
     .page-active-timer .timer-display {
-      font-size: clamp(3rem, 15vw, 5rem) !important;
-      letter-spacing: -0.05em !important;
+      font-size: clamp(3.5rem, 18vw, 6rem) !important;
+      letter-spacing: -0.06em !important;
+      font-weight: 700 !important;
     }
     .page-active-timer .timer-form {
-      display: grid;
-      gap: 32px;
-      justify-items: center;
+      display: grid !important;
+      gap: 40px !important;
+      justify-items: center !important;
     }
     .page-active-timer .field {
-      width: 100%;
-      max-width: 320px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
+      width: 100% !important;
+      max-width: 350px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 12px !important;
     }
     .page-active-timer .field-label {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--gold);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+      font-size: 1.2rem !important;
+      font-weight: 700 !important;
+      color: var(--gold) !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.15em !important;
     }
     .page-active-timer #subject-display {
-      font-size: 1.4rem;
-      font-weight: 700;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--line-gold);
-      border-radius: 12px;
-      text-align: center;
-      color: var(--text);
-      width: 100%;
+      font-size: 1.6rem !important;
+      font-weight: 800 !important;
+      padding: 15px !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 2px solid var(--line-gold) !important;
+      border-radius: 16px !important;
+      text-align: center !important;
+      color: var(--text) !important;
+      width: 100% !important;
     }
     .page-active-timer .timer-actions {
-      width: 100%;
-      max-width: 440px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      justify-content: center;
+      width: 100% !important;
+      max-width: 480px !important;
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 20px !important;
+      justify-content: center !important;
     }
     .page-active-timer .btn-timer {
-      min-height: 64px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      border-radius: 16px;
+      min-height: 70px !important;
+      font-size: 1.2rem !important;
+      font-weight: 700 !important;
+      border-radius: 20px !important;
+      transition: transform 0.2s ease !important;
+    }
+    .page-active-timer .btn-timer:active {
+      transform: scale(0.95);
     }
     .page-active-timer .site-footer {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      border: 0;
-      background: transparent;
+      position: fixed !important;
+      bottom: 30px !important;
+      left: 0;
+      right: 0;
+      width: 100% !important;
+      border: 0 !important;
+      background: transparent !important;
+      z-index: 5;
     }
   </style>
   <script type="module" src="../js/active-timer.js"></script>
