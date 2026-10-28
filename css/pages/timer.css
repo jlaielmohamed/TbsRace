@@ -99,7 +99,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 15%;
+  padding: 10%;
   text-align: center;
 }
 
@@ -150,15 +150,17 @@
 
 .timer-display {
   max-width: 100%;
+  width: 100%;
   margin-top: 10px;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: clamp(2.5rem, 14vw, 4.5rem);
+  font-size: clamp(2rem, 6vw, 3.75rem);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.08em;
+  letter-spacing: -0.07em;
   line-height: 1;
   white-space: nowrap;
+  text-align: center;
 }
 
 .timer-subline {
