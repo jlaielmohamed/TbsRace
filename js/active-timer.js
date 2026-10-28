@@ -72,7 +72,7 @@ function renderTimer() {
   const plannedSeconds = timerState?.plannedSeconds ?? 0;
   const progress = plannedSeconds > 0 ? Math.min(1, elapsedSeconds / plannedSeconds) : 0;
 
-  elements.display.textContent = formatTimerClock(Math.max(0, plannedSeconds - elapsedSeconds));
+  elements.display.textContent = formatTimerClock(elapsedSeconds);
   if (elements.ringProgress) {
     const radius = elements.ringProgress.r.baseVal.value;
     const circumference = 2 * Math.PI * radius;
